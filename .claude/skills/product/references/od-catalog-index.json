@@ -1,8 +1,15 @@
 {
   "version": 1,
-  "snapshot_date": "2026-05-18",
+  "snapshot_date": "2026-06-02",
   "source": ".claude/skills/product/design-systems/",
   "vendors": [
+    {
+      "name": "agentic",
+      "category": "Themed & Unique",
+      "mood": "Conversational AI-first interface with minimal controls, clear outcomes, and delegated task flows for agentic workflows.",
+      "palette_primary": "#ff5701",
+      "vendor_path": ".claude/skills/product/design-systems/agentic/DESIGN.md"
+    },
     {
       "name": "airbnb",
       "category": "E-Commerce & Retail",
@@ -18,11 +25,53 @@
       "vendor_path": ".claude/skills/product/design-systems/airtable/DESIGN.md"
     },
     {
+      "name": "ant",
+      "category": "Professional & Corporate",
+      "mood": "Structured, enterprise-focused design system emphasizing clarity, consistency, and efficiency for data-dense web applications.",
+      "palette_primary": "#1677ff",
+      "vendor_path": ".claude/skills/product/design-systems/ant/DESIGN.md"
+    },
+    {
       "name": "apple",
       "category": "Media & Consumer",
       "mood": "Consumer electronics. Premium white space, SF Pro, cinematic imagery.",
       "palette_primary": "Absolute Black (#000000)",
       "vendor_path": ".claude/skills/product/design-systems/apple/DESIGN.md"
+    },
+    {
+      "name": "application",
+      "category": "Professional & Corporate",
+      "mood": "App dashboard with purple-themed aesthetic, top-bar navigation, card-based layouts, and developer-first workflows.",
+      "palette_primary": "#9333ea",
+      "vendor_path": ".claude/skills/product/design-systems/application/DESIGN.md"
+    },
+    {
+      "name": "arc",
+      "category": "Productivity & SaaS",
+      "mood": "\"The browser that browses for you.\" Translucent surfaces, gradient warmth, sidebar-first layout.",
+      "palette_primary": "#ff7e5f",
+      "vendor_path": ".claude/skills/product/design-systems/arc/DESIGN.md"
+    },
+    {
+      "name": "artistic",
+      "category": "Creative & Artistic",
+      "mood": "High-contrast, expressive style with creative typography and bold color choices for visually striking interfaces.",
+      "palette_primary": "#3b82f6",
+      "vendor_path": ".claude/skills/product/design-systems/artistic/DESIGN.md"
+    },
+    {
+      "name": "atelier-zero",
+      "category": "Editorial · Studio",
+      "mood": "A magazine-grade, collage-driven visual system: warm paper canvas, surreal",
+      "palette_primary": "#efe7d2",
+      "vendor_path": ".claude/skills/product/design-systems/atelier-zero/DESIGN.md"
+    },
+    {
+      "name": "bento",
+      "category": "Layout & Structure",
+      "mood": "Modular grid layout with card-like blocks, clear hierarchy, soft spacing, and subtle visual contrast for organized, scannable interfaces.",
+      "palette_primary": "#fad4c0",
+      "vendor_path": ".claude/skills/product/design-systems/bento/DESIGN.md"
     },
     {
       "name": "binance",
@@ -39,6 +88,27 @@
       "vendor_path": ".claude/skills/product/design-systems/bmw/DESIGN.md"
     },
     {
+      "name": "bmw-m",
+      "category": "Automotive",
+      "mood": "Motorsport performance sub-brand. Near-black cockpit surfaces, BMW M tricolor accents, sharp engineering geometry.",
+      "palette_primary": "#0066b1",
+      "vendor_path": ".claude/skills/product/design-systems/bmw-m/DESIGN.md"
+    },
+    {
+      "name": "bold",
+      "category": "Bold & Expressive",
+      "mood": "Strong visual presence with heavyweight typography, high-contrast colors, and commanding layouts.",
+      "palette_primary": "#0077bc",
+      "vendor_path": ".claude/skills/product/design-systems/bold/DESIGN.md"
+    },
+    {
+      "name": "brutalism",
+      "category": "Bold & Expressive",
+      "mood": "Raw, anti-design aesthetic inspired by concrete architecture with unadorned elements, jarring layouts, and functional minimalism.",
+      "palette_primary": "#dd614c",
+      "vendor_path": ".claude/skills/product/design-systems/brutalism/DESIGN.md"
+    },
+    {
       "name": "bugatti",
       "category": "Automotive",
       "mood": "Hypercar brand. Cinema-black canvas, monochrome austerity, monumental display type.",
@@ -46,11 +116,32 @@
       "vendor_path": ".claude/skills/product/design-systems/bugatti/DESIGN.md"
     },
     {
+      "name": "cafe",
+      "category": "Creative & Artistic",
+      "mood": "Cozy cafe-inspired interface with warm tones, soft typography, and clean layouts for a relaxed browsing experience.",
+      "palette_primary": "#5d4432",
+      "vendor_path": ".claude/skills/product/design-systems/cafe/DESIGN.md"
+    },
+    {
       "name": "cal",
       "category": "Productivity & SaaS",
       "mood": "Open-source scheduling. Clean neutral UI, developer-oriented simplicity.",
       "palette_primary": "Charcoal (#242424)",
       "vendor_path": ".claude/skills/product/design-systems/cal/DESIGN.md"
+    },
+    {
+      "name": "canva",
+      "category": "Design & Creative",
+      "mood": "Visual creation platform. Vivid purple-blue gradient, generous spacing, friendly geometry.",
+      "palette_primary": "#ffffff",
+      "vendor_path": ".claude/skills/product/design-systems/canva/DESIGN.md"
+    },
+    {
+      "name": "cisco",
+      "category": "Backend & Data",
+      "mood": "Enterprise infrastructure brand. Dark trust surfaces, Cisco Blue signal, technical clarity.",
+      "palette_primary": "#049fd9",
+      "vendor_path": ".claude/skills/product/design-systems/cisco/DESIGN.md"
     },
     {
       "name": "claude",
@@ -65,6 +156,20 @@
       "mood": "Creative agency. Organic shapes, soft gradients, art-directed layout.",
       "palette_primary": "Clay Black (#000000)",
       "vendor_path": ".claude/skills/product/design-systems/clay/DESIGN.md"
+    },
+    {
+      "name": "claymorphism",
+      "category": "Morphism & Effects",
+      "mood": "Soft, rounded 3D-like shapes mimicking malleable clay with playful, puffy elements and colorful surfaces.",
+      "palette_primary": "#3b82f6",
+      "vendor_path": ".claude/skills/product/design-systems/claymorphism/DESIGN.md"
+    },
+    {
+      "name": "clean",
+      "category": "Modern & Minimal",
+      "mood": "Simplicity-focused design with ample whitespace, legible typography, and a limited color palette to reduce visual clutter.",
+      "palette_primary": "#3b82f6",
+      "vendor_path": ".claude/skills/product/design-systems/clean/DESIGN.md"
     },
     {
       "name": "clickhouse",
@@ -88,11 +193,46 @@
       "vendor_path": ".claude/skills/product/design-systems/coinbase/DESIGN.md"
     },
     {
+      "name": "colorful",
+      "category": "Bold & Expressive",
+      "mood": "Vibrant, high-contrast palettes and gradients for engaging, memorable, and modern user experiences.",
+      "palette_primary": "#3b82f6",
+      "vendor_path": ".claude/skills/product/design-systems/colorful/DESIGN.md"
+    },
+    {
       "name": "composio",
       "category": "Backend & Data",
       "mood": "Tool integration platform. Modern dark with colorful integration icons.",
       "palette_primary": "Composio Cobalt (#0007cd)",
       "vendor_path": ".claude/skills/product/design-systems/composio/DESIGN.md"
+    },
+    {
+      "name": "contemporary",
+      "category": "Modern & Minimal",
+      "mood": "Current-era minimalist design with bento grids, dark mode support, and high-performance accessible layouts.",
+      "palette_primary": "#c800df",
+      "vendor_path": ".claude/skills/product/design-systems/contemporary/DESIGN.md"
+    },
+    {
+      "name": "corporate",
+      "category": "Professional & Corporate",
+      "mood": "Professional, brand-aligned design with structured grids, minimalist layouts, and consistent enterprise patterns.",
+      "palette_primary": "#3b82f6",
+      "vendor_path": ".claude/skills/product/design-systems/corporate/DESIGN.md"
+    },
+    {
+      "name": "cosmic",
+      "category": "Creative & Artistic",
+      "mood": "Futuristic sci-fi aesthetic with dark themes, vibrant neon accents, and immersive spatial elements.",
+      "palette_primary": "#3b82f6",
+      "vendor_path": ".claude/skills/product/design-systems/cosmic/DESIGN.md"
+    },
+    {
+      "name": "creative",
+      "category": "Creative & Artistic",
+      "mood": "Playful, character-driven design with expressive typography and bold graphics for landing pages and creative projects.",
+      "palette_primary": "#3b82f6",
+      "vendor_path": ".claude/skills/product/design-systems/creative/DESIGN.md"
     },
     {
       "name": "cursor",
@@ -102,11 +242,67 @@
       "vendor_path": ".claude/skills/product/design-systems/cursor/DESIGN.md"
     },
     {
+      "name": "dashboard",
+      "category": "Professional & Corporate",
+      "mood": "Dark-themed cloud-platform aesthetic with modular grids, glass-like panels, and strong data hierarchy for productivity dashboards.",
+      "palette_primary": "#0c5cab",
+      "vendor_path": ".claude/skills/product/design-systems/dashboard/DESIGN.md"
+    },
+    {
       "name": "default",
       "category": "Starter",
       "mood": "A clean, product-oriented default. Use when the brief doesn't call for a",
       "palette_primary": null,
       "vendor_path": ".claude/skills/product/design-systems/default/DESIGN.md"
+    },
+    {
+      "name": "discord",
+      "category": "Productivity & SaaS",
+      "mood": "Voice / chat platform. Deep blurple, dark-first surfaces, playful accent moments.",
+      "palette_primary": "#313338",
+      "vendor_path": ".claude/skills/product/design-systems/discord/DESIGN.md"
+    },
+    {
+      "name": "dithered",
+      "category": "Retro & Nostalgic",
+      "mood": "Dot-pattern rendering technique that simulates shades with a limited palette for nostalgic, retro, high-contrast visuals.",
+      "palette_primary": "#3b82f6",
+      "vendor_path": ".claude/skills/product/design-systems/dithered/DESIGN.md"
+    },
+    {
+      "name": "doodle",
+      "category": "Creative & Artistic",
+      "mood": "Hand-drawn, sketch-like style with doodles, handwritten fonts, and imperfect lines for a playful, informal feel.",
+      "palette_primary": "#49b6e5",
+      "vendor_path": ".claude/skills/product/design-systems/doodle/DESIGN.md"
+    },
+    {
+      "name": "dramatic",
+      "category": "Bold & Expressive",
+      "mood": "High-contrast, theatrical design with bold layouts, immersive visuals, and unconventional compositions that command attention.",
+      "palette_primary": "#8b5cf6",
+      "vendor_path": ".claude/skills/product/design-systems/dramatic/DESIGN.md"
+    },
+    {
+      "name": "duolingo",
+      "category": "Productivity & SaaS",
+      "mood": "Language-learning platform. Bright owl green, chunky shadows, gamified joy.",
+      "palette_primary": "#58cc02",
+      "vendor_path": ".claude/skills/product/design-systems/duolingo/DESIGN.md"
+    },
+    {
+      "name": "editorial",
+      "category": "Creative & Artistic",
+      "mood": "Magazine-inspired editorial layout with refined serif typography, structured grids, and elegant reading experiences.",
+      "palette_primary": "#111111",
+      "vendor_path": ".claude/skills/product/design-systems/editorial/DESIGN.md"
+    },
+    {
+      "name": "elegant",
+      "category": "Professional & Corporate",
+      "mood": "Graceful, refined aesthetic with delicate typography, minimal palettes, and polished layouts that exude sophistication.",
+      "palette_primary": "#3b82f6",
+      "vendor_path": ".claude/skills/product/design-systems/elegant/DESIGN.md"
     },
     {
       "name": "elevenlabs",
@@ -116,11 +312,39 @@
       "vendor_path": ".claude/skills/product/design-systems/elevenlabs/DESIGN.md"
     },
     {
+      "name": "energetic",
+      "category": "Bold & Expressive",
+      "mood": "Dynamic, vibrant style with thick borders, geometric shapes, high-contrast colors, and expressive typography conveying motion and vitality.",
+      "palette_primary": "#ea580b",
+      "vendor_path": ".claude/skills/product/design-systems/energetic/DESIGN.md"
+    },
+    {
+      "name": "enterprise",
+      "category": "Professional & Corporate",
+      "mood": "Clean, high-contrast enterprise design for data-driven workflows with intuitive drag-and-drop patterns and structured layouts.",
+      "palette_primary": "#072c2c",
+      "vendor_path": ".claude/skills/product/design-systems/enterprise/DESIGN.md"
+    },
+    {
       "name": "expo",
       "category": "Developer Tools",
       "mood": "React Native platform. Dark theme, tight letter-spacing, code-centric.",
       "palette_primary": "Expo Black (#000000)",
       "vendor_path": ".claude/skills/product/design-systems/expo/DESIGN.md"
+    },
+    {
+      "name": "expressive",
+      "category": "Bold & Expressive",
+      "mood": "Vibrant, personality-driven design with bold colors, playful graphics, and dynamic layouts that balance creativity with structure.",
+      "palette_primary": "#db2777",
+      "vendor_path": ".claude/skills/product/design-systems/expressive/DESIGN.md"
+    },
+    {
+      "name": "fantasy",
+      "category": "Creative & Artistic",
+      "mood": "Game-inspired fantasy aesthetic with bold, premium visuals, rich color palettes, and immersive thematic elements.",
+      "palette_primary": "#0250cc",
+      "vendor_path": ".claude/skills/product/design-systems/fantasy/DESIGN.md"
     },
     {
       "name": "ferrari",
@@ -137,6 +361,13 @@
       "vendor_path": ".claude/skills/product/design-systems/figma/DESIGN.md"
     },
     {
+      "name": "flat",
+      "category": "Modern & Minimal",
+      "mood": "Two-dimensional minimalist style with vibrant colors, clean typography, and no 3D effects for fast, user-friendly interfaces.",
+      "palette_primary": "#f2673c",
+      "vendor_path": ".claude/skills/product/design-systems/flat/DESIGN.md"
+    },
+    {
       "name": "framer",
       "category": "Design & Creative",
       "mood": "Website builder. Bold black and blue, motion-first, design-forward.",
@@ -144,11 +375,60 @@
       "vendor_path": ".claude/skills/product/design-systems/framer/DESIGN.md"
     },
     {
+      "name": "friendly",
+      "category": "Creative & Artistic",
+      "mood": "Approachable, intuitive design with rounded elements, ample whitespace, and soft pastel color palettes.",
+      "palette_primary": "#f2d9dc",
+      "vendor_path": ".claude/skills/product/design-systems/friendly/DESIGN.md"
+    },
+    {
+      "name": "futuristic",
+      "category": "Themed & Unique",
+      "mood": "Forward-looking design with tech-inspired typography, modern layouts, and a sleek, innovation-driven aesthetic.",
+      "palette_primary": "#3b82f6",
+      "vendor_path": ".claude/skills/product/design-systems/futuristic/DESIGN.md"
+    },
+    {
+      "name": "github",
+      "category": "Developer Tools",
+      "mood": "Code-forward platform. Functional density, blue-on-white precision, Primer foundations.",
+      "palette_primary": "#ffffff",
+      "vendor_path": ".claude/skills/product/design-systems/github/DESIGN.md"
+    },
+    {
+      "name": "glassmorphism",
+      "category": "Morphism & Effects",
+      "mood": "Frosted glass effect with translucent layers, subtle blur, and luminous borders for depth and modern elegance.",
+      "palette_primary": "#1856ff",
+      "vendor_path": ".claude/skills/product/design-systems/glassmorphism/DESIGN.md"
+    },
+    {
+      "name": "gradient",
+      "category": "Morphism & Effects",
+      "mood": "Smooth color transitions and gradient-rich surfaces for modern, playful interfaces with visual depth.",
+      "palette_primary": "#990ffa",
+      "vendor_path": ".claude/skills/product/design-systems/gradient/DESIGN.md"
+    },
+    {
       "name": "hashicorp",
       "category": "Backend & Data",
       "mood": "Infrastructure automation. Enterprise-clean, black and white.",
       "palette_primary": "Black (#000000)",
       "vendor_path": ".claude/skills/product/design-systems/hashicorp/DESIGN.md"
+    },
+    {
+      "name": "hud",
+      "category": "Themed & Unique",
+      "mood": "Fighter jet / helicopter head-up display. Phosphor green on near-black, all-caps data overlays, angular geometry. Zero ambiguity at speed and altitude.",
+      "palette_primary": "#0a0a0a",
+      "vendor_path": ".claude/skills/product/design-systems/hud/DESIGN.md"
+    },
+    {
+      "name": "huggingface",
+      "category": "AI & LLM",
+      "mood": "ML community hub. Sunny yellow accent, monospace identity, cheerful and dense.",
+      "palette_primary": "#ffd21e",
+      "vendor_path": ".claude/skills/product/design-systems/huggingface/DESIGN.md"
     },
     {
       "name": "ibm",
@@ -165,6 +445,13 @@
       "vendor_path": ".claude/skills/product/design-systems/intercom/DESIGN.md"
     },
     {
+      "name": "kami",
+      "category": "Editorial & Print",
+      "mood": "Editorial paper system: warm parchment canvas, ink-blue accent, serif-led hierarchy. Built for resumes, one-pagers, white papers, portfolios, slide decks — anything that should feel like high-quality print rather than UI. Multilingual by design (EN · zh-CN · ja).",
+      "palette_primary": "#f5f4ed",
+      "vendor_path": ".claude/skills/product/design-systems/kami/DESIGN.md"
+    },
+    {
       "name": "kraken",
       "category": "Fintech & Crypto",
       "mood": "Crypto trading. Purple-accented dark UI, data-dense dashboards.",
@@ -179,11 +466,32 @@
       "vendor_path": ".claude/skills/product/design-systems/lamborghini/DESIGN.md"
     },
     {
+      "name": "levels",
+      "category": "Layout & Structure",
+      "mood": "Conversion-focused design that removes friction and guides users toward action through clarity, trust, and speed.",
+      "palette_primary": "#27272a",
+      "vendor_path": ".claude/skills/product/design-systems/levels/DESIGN.md"
+    },
+    {
       "name": "linear-app",
       "category": "Productivity & SaaS",
       "mood": "Project management. Ultra-minimal, precise, purple accent.",
       "palette_primary": "Panel Dark (#0f1011)",
       "vendor_path": ".claude/skills/product/design-systems/linear-app/DESIGN.md"
+    },
+    {
+      "name": "lingo",
+      "category": "Creative & Artistic",
+      "mood": "Playful, minimal design with bright colors, rounded shapes, tactile 3D borders, and friendly illustrations for approachable interfaces.",
+      "palette_primary": "#58cc02",
+      "vendor_path": ".claude/skills/product/design-systems/lingo/DESIGN.md"
+    },
+    {
+      "name": "loom",
+      "category": "Themed & Unique",
+      "mood": "Loom async video. Purple primary, friendly surfaces, video-first layout. Clean and professional without being corporate.",
+      "palette_primary": "#625df5",
+      "vendor_path": ".claude/skills/product/design-systems/loom/DESIGN.md"
     },
     {
       "name": "lovable",
@@ -193,6 +501,13 @@
       "vendor_path": ".claude/skills/product/design-systems/lovable/DESIGN.md"
     },
     {
+      "name": "luxury",
+      "category": "Professional & Corporate",
+      "mood": "High-end dark aesthetic with bold headings, monochromatic palette, and premium feel for luxury brand experiences.",
+      "palette_primary": "#fafafa",
+      "vendor_path": ".claude/skills/product/design-systems/luxury/DESIGN.md"
+    },
+    {
       "name": "mastercard",
       "category": "Fintech & Crypto",
       "mood": "Global payments network. Warm cream canvas, orbital pill shapes, editorial warmth.",
@@ -200,11 +515,25 @@
       "vendor_path": ".claude/skills/product/design-systems/mastercard/DESIGN.md"
     },
     {
+      "name": "material",
+      "category": "Professional & Corporate",
+      "mood": "Google's Material Design with layered surfaces, dynamic theming, built-in motion, and responsive cross-platform patterns.",
+      "palette_primary": "#6442d6",
+      "vendor_path": ".claude/skills/product/design-systems/material/DESIGN.md"
+    },
+    {
       "name": "meta",
       "category": "E-Commerce & Retail",
       "mood": "Tech retail store. Photography-first, binary light/dark surfaces, Meta Blue CTAs.",
       "palette_primary": "Meta Blue (#0064E0)",
       "vendor_path": ".claude/skills/product/design-systems/meta/DESIGN.md"
+    },
+    {
+      "name": "minimal",
+      "category": "Modern & Minimal",
+      "mood": "Stripped-back design emphasizing whitespace, clean typography, and restrained color for maximum clarity and focus.",
+      "palette_primary": "#0c0c09",
+      "vendor_path": ".claude/skills/product/design-systems/minimal/DESIGN.md"
     },
     {
       "name": "minimax",
@@ -228,6 +557,13 @@
       "vendor_path": ".claude/skills/product/design-systems/miro/DESIGN.md"
     },
     {
+      "name": "mission-control",
+      "category": "Developer Tools",
+      "mood": "Space/aerospace mission monitoring. Dark command center, amber telemetry, monospace precision. Functional clarity above all else.",
+      "palette_primary": "#0b1120",
+      "vendor_path": ".claude/skills/product/design-systems/mission-control/DESIGN.md"
+    },
+    {
       "name": "mistral-ai",
       "category": "AI & LLM",
       "mood": "Open-weight LLM provider. French-engineered minimalism, purple-toned.",
@@ -235,11 +571,46 @@
       "vendor_path": ".claude/skills/product/design-systems/mistral-ai/DESIGN.md"
     },
     {
+      "name": "modern",
+      "category": "Modern & Minimal",
+      "mood": "Contemporary editorial style with serif typography, minimal palettes, and clean layouts for polished digital products.",
+      "palette_primary": "#553f83",
+      "vendor_path": ".claude/skills/product/design-systems/modern/DESIGN.md"
+    },
+    {
       "name": "mongodb",
       "category": "Backend & Data",
       "mood": "Document database. Green leaf branding, developer documentation focus.",
       "palette_primary": "Forest Black (#001e2b)",
       "vendor_path": ".claude/skills/product/design-systems/mongodb/DESIGN.md"
+    },
+    {
+      "name": "mono",
+      "category": "Modern & Minimal",
+      "mood": "Monospace-driven, matrix-inspired design with high-contrast elements, compact density, and a hacker-chic aesthetic.",
+      "palette_primary": "#37f712",
+      "vendor_path": ".claude/skills/product/design-systems/mono/DESIGN.md"
+    },
+    {
+      "name": "neobrutalism",
+      "category": "Bold & Expressive",
+      "mood": "Modern take on brutalism with bold borders, vivid accent colors, and raw, high-contrast layouts on warm surfaces.",
+      "palette_primary": "#fdc800",
+      "vendor_path": ".claude/skills/product/design-systems/neobrutalism/DESIGN.md"
+    },
+    {
+      "name": "neon",
+      "category": "Morphism & Effects",
+      "mood": "Electric neon glow effects with high-contrast color pairings for bold, attention-grabbing interfaces.",
+      "palette_primary": "#bbf351",
+      "vendor_path": ".claude/skills/product/design-systems/neon/DESIGN.md"
+    },
+    {
+      "name": "neumorphism",
+      "category": "Morphism & Effects",
+      "mood": "Soft, extruded UI elements with inner and outer shadows on monochromatic surfaces for a tactile, embedded look.",
+      "palette_primary": "#006666",
+      "vendor_path": ".claude/skills/product/design-systems/neumorphism/DESIGN.md"
     },
     {
       "name": "nike",
@@ -270,11 +641,46 @@
       "vendor_path": ".claude/skills/product/design-systems/ollama/DESIGN.md"
     },
     {
+      "name": "openai",
+      "category": "AI & LLM",
+      "mood": "Calm, near-monochrome system anchored in deep teal-black with generous white space and editorial typography.",
+      "palette_primary": "#ffffff",
+      "vendor_path": ".claude/skills/product/design-systems/openai/DESIGN.md"
+    },
+    {
       "name": "opencode-ai",
       "category": "AI & LLM",
       "mood": "AI coding platform. Developer-centric dark theme.",
       "palette_primary": "OpenCode Dark (#201d1d)",
       "vendor_path": ".claude/skills/product/design-systems/opencode-ai/DESIGN.md"
+    },
+    {
+      "name": "pacman",
+      "category": "Themed & Unique",
+      "mood": "Retro arcade-inspired design with pixel fonts, dotted borders, playful high-contrast colors, and 8-bit game aesthetics.",
+      "palette_primary": "#2a3fe5",
+      "vendor_path": ".claude/skills/product/design-systems/pacman/DESIGN.md"
+    },
+    {
+      "name": "paper",
+      "category": "Retro & Nostalgic",
+      "mood": "Paper-textured, print-inspired design with minimal colors, clean serif/sans typography, and tactile surface qualities.",
+      "palette_primary": "#111111",
+      "vendor_path": ".claude/skills/product/design-systems/paper/DESIGN.md"
+    },
+    {
+      "name": "perplexity",
+      "category": "AI & LLM",
+      "mood": "Conversational AI search engine. Deep-dark canvas, sharp typography, single violet accent, dense information hierarchy.",
+      "palette_primary": "#0f0f10",
+      "vendor_path": ".claude/skills/product/design-systems/perplexity/DESIGN.md"
+    },
+    {
+      "name": "perspective",
+      "category": "Layout & Structure",
+      "mood": "Spatial depth design with isometric views, vanishing points, and layered elements that guide attention through 3D-like realism.",
+      "palette_primary": "#00bd7d",
+      "vendor_path": ".claude/skills/product/design-systems/perspective/DESIGN.md"
     },
     {
       "name": "pinterest",
@@ -298,11 +704,39 @@
       "vendor_path": ".claude/skills/product/design-systems/posthog/DESIGN.md"
     },
     {
+      "name": "premium",
+      "category": "Professional & Corporate",
+      "mood": "Apple-inspired premium aesthetic with precise spacing, modern typography, and a refined, polished visual language.",
+      "palette_primary": "#3b82f6",
+      "vendor_path": ".claude/skills/product/design-systems/premium/DESIGN.md"
+    },
+    {
+      "name": "professional",
+      "category": "Professional & Corporate",
+      "mood": "Polished, business-ready design with modern typography, structured layouts, and a trustworthy visual identity.",
+      "palette_primary": "#fece14",
+      "vendor_path": ".claude/skills/product/design-systems/professional/DESIGN.md"
+    },
+    {
+      "name": "publication",
+      "category": "Creative & Artistic",
+      "mood": "Print-inspired visual language for books, magazines, and reports with editorial grids and expressive typography.",
+      "palette_primary": "#a855f7",
+      "vendor_path": ".claude/skills/product/design-systems/publication/DESIGN.md"
+    },
+    {
       "name": "raycast",
       "category": "Developer Tools",
       "mood": "Productivity launcher. Sleek dark chrome, vibrant gradient accents.",
       "palette_primary": "Near-Black Blue (#07080a)",
       "vendor_path": ".claude/skills/product/design-systems/raycast/DESIGN.md"
+    },
+    {
+      "name": "refined",
+      "category": "Modern & Minimal",
+      "mood": "Carefully curated, modern minimal style with elegant serif typography and understated, sophisticated palettes.",
+      "palette_primary": "#3b82f6",
+      "vendor_path": ".claude/skills/product/design-systems/refined/DESIGN.md"
     },
     {
       "name": "renault",
@@ -324,6 +758,13 @@
       "mood": "Email API. Minimal dark theme, monospace accents.",
       "palette_primary": "Void Black (#000000)",
       "vendor_path": ".claude/skills/product/design-systems/resend/DESIGN.md"
+    },
+    {
+      "name": "retro",
+      "category": "Retro & Nostalgic",
+      "mood": "Throwback design with vintage-inspired typography, high-contrast retro palettes, and nostalgic visual elements.",
+      "palette_primary": "#3b82f6",
+      "vendor_path": ".claude/skills/product/design-systems/retro/DESIGN.md"
     },
     {
       "name": "revolut",
@@ -354,6 +795,13 @@
       "vendor_path": ".claude/skills/product/design-systems/sentry/DESIGN.md"
     },
     {
+      "name": "shadcn",
+      "category": "Modern & Minimal",
+      "mood": "Shadcn/ui-inspired design with minimal, clean components, monochrome palette, and utility-first patterns.",
+      "palette_primary": "#000000",
+      "vendor_path": ".claude/skills/product/design-systems/shadcn/DESIGN.md"
+    },
+    {
       "name": "shopify",
       "category": "E-Commerce & Retail",
       "mood": "E-commerce platform. Dark-first cinematic, neon green accent, ultra-light type.",
@@ -361,11 +809,46 @@
       "vendor_path": ".claude/skills/product/design-systems/shopify/DESIGN.md"
     },
     {
+      "name": "simple",
+      "category": "Modern & Minimal",
+      "mood": "Straightforward, no-frills design with clean typography, neutral colors, and intuitive layouts that stay out of the way.",
+      "palette_primary": "#3b82f6",
+      "vendor_path": ".claude/skills/product/design-systems/simple/DESIGN.md"
+    },
+    {
+      "name": "skeumorphism",
+      "category": "Morphism & Effects",
+      "mood": "Real-world mimicry with textured surfaces, 3D effects, and familiar physical metaphors for intuitive digital interfaces.",
+      "palette_primary": "#fa3c00",
+      "vendor_path": ".claude/skills/product/design-systems/skeumorphism/DESIGN.md"
+    },
+    {
+      "name": "slack",
+      "category": "Productivity & SaaS",
+      "mood": "Workplace communication platform. Aubergine-primary, multi-accent logo palette, light surfaces with dark sidebar, warm and approachable.",
+      "palette_primary": "#4a154b",
+      "vendor_path": ".claude/skills/product/design-systems/slack/DESIGN.md"
+    },
+    {
+      "name": "sleek",
+      "category": "Modern & Minimal",
+      "mood": "Modern minimalist aesthetic with clean lines, intentional color palette, subtle interactions, and consistent spacing.",
+      "palette_primary": "#3b82f6",
+      "vendor_path": ".claude/skills/product/design-systems/sleek/DESIGN.md"
+    },
+    {
       "name": "spacex",
       "category": "Media & Consumer",
       "mood": "Space technology. Stark black and white, full-bleed imagery, futuristic.",
       "palette_primary": "Space Black (#000000)",
       "vendor_path": ".claude/skills/product/design-systems/spacex/DESIGN.md"
+    },
+    {
+      "name": "spacious",
+      "category": "Layout & Structure",
+      "mood": "Generous whitespace, consistent padding, and grid-based layouts for clean, readable, and breathing interfaces.",
+      "palette_primary": "#3b82f6",
+      "vendor_path": ".claude/skills/product/design-systems/spacious/DESIGN.md"
     },
     {
       "name": "spotify",
@@ -380,6 +863,13 @@
       "mood": "Global coffee retail brand. Four-tier green system, warm cream canvas, full-pill buttons.",
       "palette_primary": "Starbucks Green (#006241)",
       "vendor_path": ".claude/skills/product/design-systems/starbucks/DESIGN.md"
+    },
+    {
+      "name": "storytelling",
+      "category": "Creative & Artistic",
+      "mood": "Narrative-driven design using visuals, copy, and interaction to guide users through engaging, emotionally resonant journeys.",
+      "palette_primary": "#3b82f6",
+      "vendor_path": ".claude/skills/product/design-systems/storytelling/DESIGN.md"
     },
     {
       "name": "stripe",
@@ -410,6 +900,13 @@
       "vendor_path": ".claude/skills/product/design-systems/tesla/DESIGN.md"
     },
     {
+      "name": "tetris",
+      "category": "Themed & Unique",
+      "mood": "Classic block-game inspired design with playful colors, bold display fonts, and compact, high-energy layouts.",
+      "palette_primary": "#1c202b",
+      "vendor_path": ".claude/skills/product/design-systems/tetris/DESIGN.md"
+    },
+    {
       "name": "theverge",
       "category": "Media & Consumer",
       "mood": "Tech editorial media. Acid-mint and ultraviolet accents, Manuka display, rave-flyer story tiles.",
@@ -424,6 +921,20 @@
       "vendor_path": ".claude/skills/product/design-systems/together-ai/DESIGN.md"
     },
     {
+      "name": "totality-festival",
+      "category": "Themed & Unique",
+      "mood": "Surface: web",
+      "palette_primary": "#121318",
+      "vendor_path": ".claude/skills/product/design-systems/totality-festival/DESIGN.md"
+    },
+    {
+      "name": "trading-terminal",
+      "category": "Themed & Unique",
+      "mood": "Bloomberg-style financial trading terminal. Dark-only, data-dense, cyan/coral buy/sell signals. Everything readable at a glance from two meters away.",
+      "palette_primary": "#00d4aa",
+      "vendor_path": ".claude/skills/product/design-systems/trading-terminal/DESIGN.md"
+    },
+    {
       "name": "uber",
       "category": "Media & Consumer",
       "mood": "Mobility platform. Bold black and white, tight type, urban energy.",
@@ -431,11 +942,32 @@
       "vendor_path": ".claude/skills/product/design-systems/uber/DESIGN.md"
     },
     {
+      "name": "urdu",
+      "category": "Editorial / Personal / Publication",
+      "mood": "Urdu Modern (Indus Script System)",
+      "palette_primary": "#0f595e",
+      "vendor_path": ".claude/skills/product/design-systems/urdu/DESIGN.md"
+    },
+    {
       "name": "vercel",
       "category": "Developer Tools",
       "mood": "Frontend deployment. Black and white precision, Geist font.",
       "palette_primary": "Vercel Black (#171717)",
       "vendor_path": ".claude/skills/product/design-systems/vercel/DESIGN.md"
+    },
+    {
+      "name": "vibrant",
+      "category": "Bold & Expressive",
+      "mood": "Lively, colorful design with bold playful typography, warm accents, and dynamic visual energy.",
+      "palette_primary": "#7c61d4",
+      "vendor_path": ".claude/skills/product/design-systems/vibrant/DESIGN.md"
+    },
+    {
+      "name": "vintage",
+      "category": "Retro & Nostalgic",
+      "mood": "1950s-1990s nostalgia with skeuomorphic touches, grainy textures, retro color palettes, and pixel-style typography.",
+      "palette_primary": "#008080",
+      "vendor_path": ".claude/skills/product/design-systems/vintage/DESIGN.md"
     },
     {
       "name": "vodafone",
@@ -454,7 +986,7 @@
     {
       "name": "warm-editorial",
       "category": "Starter",
-      "mood": "A serif-led magazine aesthetic. Terracotta accent on warm off-white paper \u2014",
+      "mood": "A serif-led magazine aesthetic. Terracotta accent on warm off-white paper —",
       "palette_primary": null,
       "vendor_path": ".claude/skills/product/design-systems/warm-editorial/DESIGN.md"
     },
@@ -466,11 +998,25 @@
       "vendor_path": ".claude/skills/product/design-systems/warp/DESIGN.md"
     },
     {
+      "name": "webex",
+      "category": "Productivity & SaaS",
+      "mood": "Collaboration platform. Momentum typography, blue action system, multi-user accent spectrum.",
+      "palette_primary": "#1170cf",
+      "vendor_path": ".claude/skills/product/design-systems/webex/DESIGN.md"
+    },
+    {
       "name": "webflow",
       "category": "Design & Creative",
       "mood": "Visual web builder. Blue-accented, polished marketing site aesthetic.",
       "palette_primary": "Near Black (#080808)",
       "vendor_path": ".claude/skills/product/design-systems/webflow/DESIGN.md"
+    },
+    {
+      "name": "wechat",
+      "category": "Social & Messaging",
+      "mood": "Brand visual language for WeChat Mini Programs, official accounts, and open ecosystem extensions.",
+      "palette_primary": "#07c160",
+      "vendor_path": ".claude/skills/product/design-systems/wechat/DESIGN.md"
     },
     {
       "name": "wired",

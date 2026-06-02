@@ -21,13 +21,19 @@ Transcript so far (chronological; most recent last):
 <TRANSCRIPT BODY — the `## Transcript` section of meeting.md, or a tail of it if long>
 
 Your job this turn:
-- Contribute **one** substantive turn that advances the deliberation — agree/disagree with
-  specific prior points, add a new consideration, or sharpen a tradeoff. Be concrete; name
-  what you are responding to. Do not summarize the whole meeting (that is the synthesis step).
+- Contribute **one** turn that advances the deliberation — agree/disagree with specific prior
+  points, add a new consideration, sharpen a tradeoff, **answer a question put to you, or
+  deliver a report you were asked for**. Be concrete; name what you are responding to. A turn
+  may be short (a focused question, an answer, a brief reaction) — it does not have to be an
+  essay. Do not summarize the whole meeting (that is the synthesis step).
 - Stay on the topic. One turn, not a transcript.
+- **Addressing (optional):** if you want a specific participant to speak next, end your turn
+  with a single final line `Next: <id>` using an exact participant id from the roster
+  (e.g. `Next: codex`). This hands them the floor as the default next speaker. Omit it if you
+  have no preference. Write the id literally — `@mentions` or names in prose do not count.
 <IF --web> - You MAY use web search to ground any factual claim. If you do, end your turn with a
   `Sources:` block listing the URLs you used. A research-backed turn with no `Sources:` block
-  is invalid.
+  is invalid. (If you also use a `Next:` directive, put it on the very last line, after Sources.)
 <IF NOT --web> - Do not perform web research this turn; reason from the transcript and your knowledge.
 
 Output ONLY your turn text (it becomes your contribution verbatim). Do not edit any files.

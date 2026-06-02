@@ -19,6 +19,9 @@ import {
   verifyManifest,
   resolveChangedVendoredScope,
   COMPARE_FILE_CAP,
+  buildCatalogVendors,
+  pinnedContentAlreadyApplied,
+  scanStaleCounts,
 } from "./sync-open-design.js";
 
 let tmpRoot: string;
@@ -244,5 +247,158 @@ describe("verifyManifest — drift detection", () => {
     const single = results.find((r) => r.dst.endsWith("system.ts"))!;
     expect(single.ok).toBe(false);
     expect(single.note).toMatch(/missing/);
+  });
+});
+
+// ── Fix 2: catalogue regen (acceptance 4) ──────────────────────────────────────
+describe("buildCatalogVendors — preserve curated, add mechanical", () => {
+  const vp = (n: string) => `prefix/design-systems/${n}/DESIGN.md`;
+  const cat = (n: string) => (n === "newcat" ? "Themed & Unique" : null);
+
+  test("preserves a curated entry verbatim (category/mood/palette kept, vendor_path refreshed)", () => {
+    const curated = {
+      name: "airbnb",
+      category: "E-Commerce & Retail",
+      mood: "Travel marketplace.",
+      palette_primary: "Rausch (#ff385c)",
+      vendor_path: "stale/path.md",
+    };
+    const out = buildCatalogVendors(
+      [{ name: "airbnb", mood: "MECHANICAL mood that must be ignored", palette_summary: ["#000000"] }],
+      { airbnb: curated },
+      cat,
+      vp,
+    );
+    expect(out).toHaveLength(1);
+    expect(out[0].category).toBe("E-Commerce & Retail");
+    expect(out[0].mood).toBe("Travel marketplace.");
+    expect(out[0].palette_primary).toBe("Rausch (#ff385c)");
+    expect(out[0].vendor_path).toBe(vp("airbnb")); // refreshed, not the stale path
+  });
+
+  test("adds a new system mechanically (category from categoryOf, mood + first hex from ds)", () => {
+    const out = buildCatalogVendors(
+      [{ name: "newcat", mood: "  Fresh mood  ", palette_summary: ["#abcdef", "#123456"] }],
+      {},
+      cat,
+      vp,
+    );
+    expect(out[0]).toEqual({
+      name: "newcat",
+      category: "Themed & Unique",
+      mood: "Fresh mood",
+      palette_primary: "#abcdef",
+      vendor_path: vp("newcat"),
+    });
+  });
+
+  test("new system with no category falls back to Uncategorized; no palette → empty primary", () => {
+    const out = buildCatalogVendors(
+      [{ name: "bare", mood: "x", palette_summary: [] }],
+      {},
+      cat,
+      vp,
+    );
+    expect(out[0].category).toBe("Uncategorized");
+    expect(out[0].palette_primary).toBe("");
+  });
+
+  test("output is sorted by name", () => {
+    const out = buildCatalogVendors(
+      [
+        { name: "zeta", mood: "", palette_summary: [] },
+        { name: "alpha", mood: "", palette_summary: [] },
+      ],
+      {},
+      cat,
+      vp,
+    );
+    expect(out.map((v) => v.name)).toEqual(["alpha", "zeta"]);
+  });
+});
+
+// ── Fix 1: content-true idempotence fast-path (acceptance 1/2/3) ────────────────
+describe("pinnedContentAlreadyApplied — cheap no-op fast-path", () => {
+  const ok = (dst: string) => ({ dst, ok: true, expected: "x", actual: "x" });
+  const drift = (dst: string) => ({ dst, ok: false, expected: "x", actual: "y" });
+  const hist = (...shas: string[]) =>
+    shas.map((sha) => ({ event: "apply" as const, sha, at: "t", reason: "r" }));
+
+  test("true when all paths verify AND the latest apply sha equals pinned_sha", () => {
+    expect(
+      pinnedContentAlreadyApplied([ok("a"), ok("b")], hist("OLD", "NEW"), "NEW"),
+    ).toBe(true);
+  });
+
+  test("false when pinned_sha moved past the last apply (the --bump case)", () => {
+    // bump set pinned_sha=NEW but the last apply was still OLD → must NOT no-op
+    expect(
+      pinnedContentAlreadyApplied([ok("a")], hist("OLD"), "NEW"),
+    ).toBe(false);
+  });
+
+  test("false on any on-disk verify drift even if shas line up", () => {
+    expect(
+      pinnedContentAlreadyApplied([ok("a"), drift("b")], hist("NEW"), "NEW"),
+    ).toBe(false);
+  });
+
+  test("false when pinned_sha is null or no apply history exists", () => {
+    expect(pinnedContentAlreadyApplied([ok("a")], hist("NEW"), null)).toBe(false);
+    expect(pinnedContentAlreadyApplied([ok("a")], [], "NEW")).toBe(false);
+    expect(pinnedContentAlreadyApplied([], hist("NEW"), "NEW")).toBe(false);
+  });
+
+  test("uses the LATEST apply, ignoring non-apply history events", () => {
+    const mixed = [
+      { event: "bump" as const, sha: "NEW", at: "t", reason: "r" },
+      { event: "apply" as const, sha: "OLD", at: "t", reason: "r" },
+      { event: "bump" as const, sha: "NEW", at: "t", reason: "r" },
+    ];
+    // last apply is OLD, pinned is NEW → not applied yet
+    expect(pinnedContentAlreadyApplied([ok("a")], mixed, "NEW")).toBe(false);
+  });
+});
+
+// ── Fix 3: stale-count advisory (acceptance 5) ──────────────────────────────────
+describe("scanStaleCounts — flag doc lines whose count != catalogue size", () => {
+  test("flags a stale '73 systems' line when current is 150", () => {
+    const hits = scanStaleCounts([{ path: "a.md", text: "see the available 73 systems here" }], 150);
+    expect(hits).toHaveLength(1);
+    expect(hits[0]).toMatchObject({ path: "a.md", line: 1, found: 73 });
+  });
+
+  test("ignores a line whose count already matches the catalogue", () => {
+    expect(scanStaleCounts([{ path: "a.md", text: "the available 150 systems" }], 150)).toEqual([]);
+  });
+
+  test("flags the '73 `DESIGN.md` directories' phrasing", () => {
+    const hits = scanStaleCounts([{ path: "p.md", text: "vendor lives at X (73 `DESIGN.md` directories)" }], 150);
+    expect(hits).toHaveLength(1);
+    expect(hits[0].found).toBe(73);
+  });
+
+  test("matches 'design systems' with the optional 'design' word", () => {
+    const hits = scanStaleCounts([{ path: "a.md", text: "all 73 design systems are vendored" }], 150);
+    expect(hits).toHaveLength(1);
+  });
+
+  test("returns no hits for lines with no count pattern", () => {
+    expect(scanStaleCounts([{ path: "a.md", text: "no numbers about the catalogue here" }], 150)).toEqual([]);
+  });
+
+  test("reports the right line number across a multi-line doc", () => {
+    const text = "line one\nline two\nthe 73 design systems line\nline four";
+    const hits = scanStaleCounts([{ path: "a.md", text }], 150);
+    expect(hits).toHaveLength(1);
+    expect(hits[0].line).toBe(3);
+  });
+
+  test("does NOT false-flag 'system-design' or 'shortlist 1-4 systems' prose", () => {
+    const noise = [
+      { path: "a.md", text: "Step 08 system-design feeds Step 12" },
+      { path: "b.md", text: "shortlist 1-4 systems per direction" },
+    ];
+    expect(scanStaleCounts(noise, 150)).toEqual([]);
   });
 });

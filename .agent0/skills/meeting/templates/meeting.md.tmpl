@@ -13,7 +13,7 @@ synthesis: pending
 
 # Meeting: {{TOPIC}}
 
-_A multi-party, multi-model deliberation. The front-matter above is the machine-readable state: `roster` is every participant id, `rotation` is the round-robin order of model participants (human excluded), `next_speaker` is whose turn is legal by default, `turn_counter` counts written turns, `synthesis` tracks the close-out. A fresh runtime reads only the front-matter to learn whose turn is legal — the body below is the chronological transcript._
+_A multi-party, multi-model deliberation. The front-matter above is the machine-readable state: `roster` is every participant id, `rotation` is the deterministic **fallback order** of model participants (human excluded), `next_speaker` is the **derived default** speaker (set by a turn's trailing `Next: <id>` directive; not enforced legality), `turn_counter` counts written turns, `synthesis` tracks the close-out. Speaker selection is context-driven: a turn may end with an explicit `Next: <roster-id>` line to hand the floor; otherwise the human directs with `--speaker`. The body below is the chronological transcript._
 
 ## Participants
 
@@ -21,7 +21,7 @@ _A multi-party, multi-model deliberation. The front-matter above is the machine-
 
 ## Transcript
 
-_Turns are appended below in order. Each turn header is `### Turn N — <runtime> (<id>)`; a research-backed turn carries a `Sources:` block listing the URLs used._
+_Turns are appended below in order. Each turn header is `### Turn N — <runtime> (<id>)`; a research-backed turn carries a `Sources:` block listing the URLs used. A turn may end with a single trailing `Next: <roster-id>` line to hand the floor to a specific participant (the directive stays visible here; it sets the default next speaker)._
 
 ## Synthesis
 

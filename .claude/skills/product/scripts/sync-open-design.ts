@@ -32,7 +32,12 @@ const SKILL_ROOT = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
 const MANIFEST_PATH = path.join(SKILL_ROOT, 'vendor/open-design/MANIFEST.json');
 const RUNTIME_DIR = path.join(SKILL_ROOT, 'runtime/od-sync');
 const DS_INDEX_PATH = path.join(SKILL_ROOT, 'vendor/open-design/.cache/ds-index.json');
+const CATALOG_INDEX_PATH = path.join(SKILL_ROOT, 'references/od-catalog-index.json');
 const DESIGN_SYSTEMS_DIR = path.join(SKILL_ROOT, 'design-systems');
+// Repo-relative prefix the pipeline-facing catalogue stores in `vendor_path`
+// (steps 02/14 reference this literal). Fallback when no existing catalogue
+// declares a `source`; matches the one-off /tmp/gen-catalog.py reference impl.
+const CATALOG_VENDOR_PREFIX = '.claude/skills/product/design-systems';
 const UPSTREAM_URL = 'https://github.com/nexu-io/open-design';
 const UPSTREAM_GIT = `${UPSTREAM_URL}.git`;
 
@@ -426,21 +431,15 @@ async function cmdApply(): Promise<void> {
   const stagingDir = path.join(RUNTIME_DIR, `staging-${sha}`);
   const archiveRoot = `open-design-${sha}`;
 
-  // ── Idempotence check ────────────────────────────────────────────────────
-  let alreadyInSync = manifest.vendored_paths.length > 0;
-  for (const vp of manifest.vendored_paths) {
-    if (!vp.checksum) { alreadyInSync = false; break; }
-    const dstFull = path.join(SKILL_ROOT, vp.dst);
-    if (!existsSync(dstFull)) { alreadyInSync = false; break; }
-    if (vp.recursive) {
-      continue;
-    }
-    const existing = await fs.readFile(dstFull);
-    const existingHash = `sha256:${sha256hex(existing)}`;
-    if (existingHash !== vp.checksum) { alreadyInSync = false; break; }
-  }
-
-  if (alreadyInSync && manifest.vendored_paths.length > 0) {
+  // ── Idempotence fast-path (network-free) — spec 141 ───────────────────────
+  // On-disk is provably == content-at-pinned-sha when every path verifies AND the
+  // last apply recorded this pinned_sha. After a `--bump` the latest apply lags
+  // pinned_sha → this is false → we fall through to download + stage + content-
+  // compare (the slow-path after Phase A). This replaces the old gate that
+  // compared on-disk against the STALE manifest checksums and blind-skipped
+  // recursive trees (`if (vp.recursive) continue`) — the two bugs that made a
+  // `--bump`+`--apply` false-no-op. `verifyManifest` content-compares trees correctly.
+  if (pinnedContentAlreadyApplied(verifyManifest(manifest, SKILL_ROOT), manifest.history, sha)) {
     console.log('no-op (already in sync)');
     return;
   }
@@ -545,6 +544,36 @@ async function cmdApply(): Promise<void> {
     );
   }
 
+  // ── Slow-path no-op — spec 141 ────────────────────────────────────────────
+  // Reached only when the fast-path could not decide (a `--bump` moved pinned_sha,
+  // or on-disk drift). The staged checksums ARE the content at pinned_sha (header-
+  // included, tree-aware). If every vendored path's staged checksum already equals
+  // its on-disk checksum AND nothing was removed from the tarball, on-disk is
+  // already == pinned content → short-circuit before the Phase B rename + manifest
+  // rewrite. (Tarball is cached, so a repeated post-bump no-op stays cheap.)
+  const wouldBeChecksum = new Map<VendoredPath, string>();
+  for (const vp of manifest.vendored_paths) {
+    const entries = staged.filter((e) => e.vp === vp);
+    if (entries.length === 0) continue;
+    wouldBeChecksum.set(
+      vp,
+      vp.recursive ? computeTreeChecksum(entries.map((e) => e.checksum)) : entries[0].checksum,
+    );
+  }
+  const onDiskNow = verifyManifest(manifest, SKILL_ROOT);
+  const stagedMatchesOnDisk =
+    report.removed.length === 0 &&
+    manifest.vendored_paths.every((vp) => {
+      const wb = wouldBeChecksum.get(vp);
+      if (wb === undefined) return false;
+      return onDiskNow.find((r) => r.dst === vp.dst)?.actual === wb;
+    });
+  if (stagedMatchesOnDisk && manifest.vendored_paths.length > 0) {
+    console.log('no-op (already in sync — staged content matches on-disk)');
+    await fs.rm(stagingDir, { recursive: true, force: true });
+    return;
+  }
+
   // ── Phase B: atomic move staging → final dst ─────────────────────────────
   console.log(`Validation passed (${staged.length} files). Moving staging → dst …`);
   for (const { dstFull, stagedPath, checksum, vp } of staged) {
@@ -580,8 +609,18 @@ async function cmdApply(): Promise<void> {
 
   await writeManifest(manifest);
 
-  // ── Regenerate the DS index (part of the consumed vendor surface) ────────
+  // ── Regenerate both consumed indices (spec 141) ──────────────────────────
+  // ds-index.json is the engine/MCP cache; od-catalog-index.json is the
+  // pipeline-facing curated catalogue steps 02 + 14 actually Read. The old
+  // `--apply` regenerated only the former, leaving new systems invisible to
+  // /product — acceptance 4 fixes that by regenerating both.
   await generateDsIndex(sha);
+  const catalogCount = await generateCatalogIndex();
+
+  // ── Stale-count advisory (acceptance 5) ───────────────────────────────────
+  // Non-blocking: flag tracked OD docs whose hard-coded system count no longer
+  // matches the catalogue. Reports only — never edits, never fails the apply.
+  const staleHits = await scanAllowlistStaleCounts(catalogCount);
 
   // ── Write apply report ───────────────────────────────────────────────────
   const reportPath = path.join(RUNTIME_DIR, `apply-${sha.slice(0, 12)}.md`);
@@ -590,6 +629,7 @@ async function cmdApply(): Promise<void> {
     '',
     `**sha:** \`${sha}\``,
     `**at:** ${at}`,
+    `**catalogue systems:** ${catalogCount}`,
     '',
     `## Added (${report.added.length})`,
     ...report.added.map((f) => `- \`${f}\``),
@@ -600,8 +640,16 @@ async function cmdApply(): Promise<void> {
     `## Removed from tarball (${report.removed.length})`,
     ...report.removed.map((f) => `- \`${f}\``),
     '',
+    `## Stale count advisory (${staleHits.length})`,
+    ...(staleHits.length === 0
+      ? ['_none — all checked docs reference the current count_']
+      : staleHits.map((h) => `- \`${h.path}:${h.line}\` says ${h.found}, expected ${catalogCount} — \`${h.text}\``)),
+    '',
   ];
   await fs.writeFile(reportPath, reportLines.join('\n') + '\n', 'utf-8');
+  if (staleHits.length > 0) {
+    console.warn(`stale-count advisory: ${staleHits.length} doc line(s) reference an outdated system count (see apply report).`);
+  }
   console.log(`Apply report → ${reportPath}`);
   console.log(
     `Done: ${report.added.length} added, ${report.updated.length} updated, ${report.removed.length} removed.`,
@@ -704,6 +752,78 @@ export function verifyManifest(manifest: Manifest, root: string): VerifyResult[]
   });
 }
 
+/**
+ * Cheap, network-free idempotence fast-path for `--apply` (spec 141, acceptance 1/2).
+ *
+ * Returns true ONLY when on-disk content is provably equal to the content at
+ * `pinnedSha`, decided without downloading the tarball:
+ *   - every vendored path verifies against the manifest (on-disk == recorded
+ *     checksums, recursive trees included — `verifyManifest` already handles those), AND
+ *   - the most recent `apply` history event recorded `pinnedSha`.
+ * When both hold, on-disk == content-at-last-apply == content-at-pinned-sha by
+ * transitivity. After a `--bump` the latest apply sha lags `pinnedSha`, so this
+ * returns false and the caller falls to the download+stage slow-path — which is
+ * exactly the bug the old manifest-compare gate masked (it false-no-op'd the bump).
+ * Exported for direct unit testing.
+ */
+export function pinnedContentAlreadyApplied(
+  verifyResults: VerifyResult[],
+  history: HistoryEntry[],
+  pinnedSha: string | null,
+): boolean {
+  if (!pinnedSha) return false;
+  if (verifyResults.length === 0) return false;
+  if (!verifyResults.every((r) => r.ok)) return false;
+  const applies = history.filter((h) => h.event === 'apply');
+  const lastApply = applies.length > 0 ? applies[applies.length - 1] : null;
+  return lastApply?.sha === pinnedSha;
+}
+
+/**
+ * Scan doc text for hard-coded catalogue-size counts that no longer match the
+ * current system count (spec 141, acceptance 5). Pure + exported for unit testing;
+ * the `--apply` report calls it over a fixed allowlist of OD-related docs and lists
+ * any hit so a count change does not silently rot the prose. Reports only.
+ *
+ * Patterns are deliberately context-specific (not a bare `<N> systems`) so the
+ * scan does not false-flag prose like "Step 08 system-design" or "shortlist 1-4
+ * systems": only `<N> design systems`, `available <N> systems`, and
+ * `<N> [`]DESIGN.md` — the catalogue-size phrasings the 73→150 advance left stale.
+ * A line is flagged iff it carries a matched count != currentCount.
+ */
+export interface StaleCountHit {
+  path: string;
+  line: number;
+  text: string;
+  found: number;
+}
+
+const STALE_COUNT_PATTERNS = [
+  /\b(\d+)\s+design\s+systems?\b/gi,
+  /\bavailable\s+(\d+)\s+systems?\b/gi,
+  /\b(\d+)\s+`?DESIGN\.md/gi,
+];
+
+export function scanStaleCounts(
+  files: { path: string; text: string }[],
+  currentCount: number,
+): StaleCountHit[] {
+  const hits: StaleCountHit[] = [];
+  for (const f of files) {
+    f.text.split('\n').forEach((lineText, i) => {
+      const found: number[] = [];
+      for (const re of STALE_COUNT_PATTERNS) {
+        for (const m of lineText.matchAll(re)) found.push(Number(m[1]));
+      }
+      const stale = found.find((n) => n !== currentCount);
+      if (stale !== undefined) {
+        hits.push({ path: f.path, line: i + 1, text: lineText.trim(), found: stale });
+      }
+    });
+  }
+  return hits;
+}
+
 async function cmdVerify(): Promise<void> {
   const manifest = await readManifest();
   const results = verifyManifest(manifest, SKILL_ROOT);
@@ -788,6 +908,125 @@ export async function generateDsIndex(pinnedSha: string | null): Promise<number>
   return entries.length;
 }
 
+// ── Pipeline-facing catalogue generation (spec 141, acceptance 4) ──────────────
+
+interface CatalogVendor {
+  name: string;
+  category: string;
+  mood: string;
+  palette_primary: string;
+  vendor_path: string;
+}
+
+/**
+ * Build the `vendors[]` array for `references/od-catalog-index.json` from the
+ * generated ds-index, preserving curation and adding new systems mechanically.
+ * Pure + exported for unit testing (the FS read/write lives in `generateCatalogIndex`).
+ *
+ * Per system: a name already present in `existingByName` is preserved VERBATIM
+ * (curated `category`/`mood`/`palette_primary` kept; only `vendor_path` refreshed),
+ * so a hand-named palette like "Rausch (#ff385c)" survives a regen. A new system is
+ * built mechanically — `category` from `categoryOf` (→ "Uncategorized" when absent),
+ * `mood` + first `palette_summary` hex from the ds entry. Sorted by name.
+ *
+ * Mirrors the one-off /tmp/gen-catalog.py reference impl exactly.
+ */
+export function buildCatalogVendors(
+  dsSystems: DsIndexEntry[],
+  existingByName: Record<string, CatalogVendor>,
+  categoryOf: (name: string) => string | null,
+  vendorPathOf: (name: string) => string,
+): CatalogVendor[] {
+  const vendors: CatalogVendor[] = dsSystems.map((s) => {
+    const existing = existingByName[s.name];
+    if (existing) {
+      return { ...existing, vendor_path: vendorPathOf(s.name) };
+    }
+    return {
+      name: s.name,
+      category: categoryOf(s.name) ?? 'Uncategorized',
+      mood: (s.mood ?? '').trim(),
+      palette_primary: s.palette_summary[0] ?? '',
+      vendor_path: vendorPathOf(s.name),
+    };
+  });
+  return vendors.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** Read the `> Category:` line from a vendored DESIGN.md, or null if absent. */
+function readDesignCategory(name: string): string | null {
+  const designMd = path.join(DESIGN_SYSTEMS_DIR, name, 'DESIGN.md');
+  if (!existsSync(designMd)) return null;
+  for (const line of readFileSync(designMd, 'utf-8').split('\n')) {
+    const m = line.match(/^>\s*Category:\s*(.+?)\s*$/i);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+/**
+ * Regenerate `references/od-catalog-index.json` (the pipeline-facing catalogue
+ * steps 02-prototype + 14-design-system actually `Read`) from the freshly-written
+ * ds-index. Called at the end of `--apply`; also runnable standalone via
+ * `--gen-catalog` for bootstrap/repair — the same dual-exposure as `generateDsIndex`
+ * / `--gen-ds-index`. Returns the system count written.
+ */
+export async function generateCatalogIndex(): Promise<number> {
+  const dsIndex = JSON.parse(await fs.readFile(DS_INDEX_PATH, 'utf-8')) as {
+    systems: DsIndexEntry[];
+  };
+
+  let existingByName: Record<string, CatalogVendor> = {};
+  let source = `${CATALOG_VENDOR_PREFIX}/`;
+  if (existsSync(CATALOG_INDEX_PATH)) {
+    const prior = JSON.parse(await fs.readFile(CATALOG_INDEX_PATH, 'utf-8')) as {
+      source?: string;
+      vendors: CatalogVendor[];
+    };
+    existingByName = Object.fromEntries((prior.vendors ?? []).map((v) => [v.name, v]));
+    if (prior.source) source = prior.source;
+  }
+
+  const prefix = source.replace(/\/$/, '');
+  const vendorPathOf = (name: string) => `${prefix}/${name}/DESIGN.md`;
+  const vendors = buildCatalogVendors(dsIndex.systems, existingByName, readDesignCategory, vendorPathOf);
+
+  const out = {
+    version: 1,
+    snapshot_date: todayDateStr(),
+    source,
+    vendors,
+  };
+  mkdirSync(path.dirname(CATALOG_INDEX_PATH), { recursive: true });
+  await fs.writeFile(CATALOG_INDEX_PATH, JSON.stringify(out, null, 2) + '\n', 'utf-8');
+  console.log(`Catalogue index written → ${CATALOG_INDEX_PATH} (${vendors.length} systems)`);
+  return vendors.length;
+}
+
+/**
+ * Fixed allowlist of tracked OD-related docs whose prose hard-codes the catalogue
+ * system count. Scoping the stale-count scan to these (rather than the whole repo)
+ * keeps `scanStaleCounts`'s deliberately-loose count regex from false-flagging
+ * unrelated numbers. Paths are SKILL_ROOT-relative.
+ */
+const STALE_COUNT_DOC_ALLOWLIST = [
+  'SKILL.md',
+  'templates/pipeline/02-prototype/prompt.md',
+  'templates/pipeline/02-prototype/references/od-bridge.md',
+  'templates/pipeline/14-design-system/prompt.md',
+];
+
+/** Read the allowlist docs and flag any line whose count != currentCount. */
+async function scanAllowlistStaleCounts(currentCount: number): Promise<StaleCountHit[]> {
+  const files: { path: string; text: string }[] = [];
+  for (const rel of STALE_COUNT_DOC_ALLOWLIST) {
+    const full = path.join(SKILL_ROOT, rel);
+    if (!existsSync(full)) continue;
+    files.push({ path: rel, text: await fs.readFile(full, 'utf-8') });
+  }
+  return scanStaleCounts(files, currentCount);
+}
+
 // ── CLI entry point ──────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
@@ -810,13 +1049,16 @@ async function main(): Promise<void> {
     } else if (cmd === '--gen-ds-index') {
       const manifest = await readManifest();
       await generateDsIndex(manifest.pinned_sha);
+    } else if (cmd === '--gen-catalog') {
+      await generateCatalogIndex();
     } else {
       console.error(`Usage:
   bun scripts/sync-open-design.ts --check
   bun scripts/sync-open-design.ts --bump <sha> --reason "..."
   bun scripts/sync-open-design.ts --apply
   bun scripts/sync-open-design.ts --verify
-  bun scripts/sync-open-design.ts --gen-ds-index`);
+  bun scripts/sync-open-design.ts --gen-ds-index
+  bun scripts/sync-open-design.ts --gen-catalog`);
       process.exit(1);
     }
   } catch (err: unknown) {

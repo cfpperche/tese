@@ -20,12 +20,12 @@ Reach for `/meeting` when the value is **cross-model deliberation on an unanchor
 
 ## State vs content split
 
-The skill separates two concerns so turn legality is mechanical, not prose-inferred:
+The skill separates two concerns so speaker selection and single-writer authority are mechanical, not prose-inferred:
 
-- **State** — a machine-readable YAML front-matter header, owned by `.agent0/skills/meeting/scripts/meeting.sh`. Fields: `meeting`, `topic`, `created`, `convener`, `mode`, `roster` (CSV of all participant ids), `rotation` (CSV of model ids in round-robin order, human excluded), `turn_counter`, `next_speaker`, `synthesis` (`pending|written|accepted|rejected`). A fresh runtime reads only this header to learn whose turn is legal.
+- **State** — a machine-readable YAML front-matter header, owned by `.agent0/skills/meeting/scripts/meeting.sh`. Fields: `meeting`, `topic`, `created`, `convener`, `mode`, `roster` (CSV of all participant ids), `rotation` (CSV of model ids — the **fallback speaker order**, human excluded; not a round-robin), `turn_counter`, `next_speaker` (the **derived default** speaker — set by a turn's trailing `Next: <id>` directive, not enforced legality), `synthesis` (`pending|written|accepted|rejected`). A fresh runtime reads only this header to learn the default next speaker.
 - **Content** — turn bodies and the synthesis prose, authored by the active runtime and appended to the body. The script never writes content; the runtime never hand-edits the header.
 
-`meeting.sh` subcommands: `init`, `state`, `next`, `check <file> <speaker>`, `advance <file> --speaker <id> [--synthesis <status>]`, `append-turn <file> --speaker <id> --body-file <p> [--sources-file <p>] [--require-sources]`.
+`meeting.sh` subcommands: `init`, `state`, `next`, `check <file> <speaker>` (roster-membership only), `resolve-speaker <file> [--speaker <id>]`, `advance <file> --speaker <id> [--next <id>] [--synthesis <status>]`, `append-turn <file> --speaker <id> --body-file <p> [--sources-file <p>] [--require-sources]` (parses a trailing `Next: <id>` marker in the body).
 
 ## Turn transport & single-writer rule
 
@@ -33,9 +33,19 @@ The active runtime is the **single writer** for every turn:
 
 - **Next speaker is the active runtime** → it authors the turn inline and appends it.
 - **Next speaker is a peer model** → the active runtime fills `references/turn-prompt.md`, invokes the peer through `codex-exec` / `claude-exec` **read-only** (the peer returns turn text only and must not edit files), and appends the returned text itself.
-- **Next speaker is the human** → the human supplies the text; the active runtime appends it. A human turn increments the counter but does not consume a model's rotation slot.
+- **Next speaker is the human** → the human supplies the text; the active runtime appends it. A human turn increments the counter; like any turn it may carry a trailing `Next: <id>` directive, and with none it leaves the default speaker unchanged.
 
 This keeps write authority single-owner per turn and makes a peer's mid-turn failure auditable (nothing half-written).
+
+## Addressing & speaker selection
+
+Speaker selection is **context-driven, not round-robin** (spec 140). A turn body MAY end with a single explicit trailing directive — `Next: <roster-id>` — to hand the floor to a specific participant. `meeting.sh` parses **only** that exact shape on the last non-empty line (never natural language; prose `@mentions` or the word "Next" mid-line do not count). A valid marker becomes the new `next_speaker`; an explicit-but-invalid marker (empty, multi-token, or a non-roster id) **fails the append before anything is written**. The directive is left **visible** in the canonical transcript (it is part of the audit trail). A turn with no marker leaves the default unchanged.
+
+`next_speaker` is therefore a **derived, reported default** — not enforced legality. `meeting.sh check` is demoted to **roster-membership only** (is this a known participant?), and `--speaker` directs freely with no "out of order" warning. The default at any moment is computed by `resolve-speaker` with this precedence, every source roster-validated (a stale/non-roster value is skipped, never used as a hidden default):
+
+`--speaker <id>` → trailing `Next:` marker from the last appended turn (already stored in `next_speaker`) → existing `next_speaker` header → first model in `rotation` (fallback order) → convener.
+
+**Boundary with spec 138 (load-bearing).** A deterministic, transcript-addressed default speaker is **in scope** here: the human still triggers exactly one turn, and the selection is mechanical (exact `Next: <id>` match) and visible in the header. **Out of scope** — and still gated behind spec 138's demand test — are the active model *semantically inferring* the "right" next speaker, and any multi-turn auto-chain. Deterministic transcript directive → yes; semantic speaker choice or autonomous looping → no.
 
 ## Research-backed turns
 
@@ -59,7 +69,7 @@ Participants are distinct **model runtimes**, not theatrical role-play identitie
 
 - **Symmetric identity.** The skill determines its own runtime from execution context (Claude Code → `claude`, Codex CLI → `codex`) to decide per turn whether the next speaker is itself or a peer. A port must not hardcode a runtime literal.
 - **One turn per invocation.** `/meeting turn` writes exactly one turn and stops; it must not chain turns autonomously (that is the deferred orchestrator mode).
-- **Header is the source of truth.** Never hand-edit `turn_counter` / `next_speaker` / `synthesis`; route through `meeting.sh` so legality stays consistent.
+- **Header is the source of truth.** Never hand-edit `turn_counter` / `next_speaker` / `synthesis`; route through `meeting.sh` so state stays consistent.
 - **Runtime-neutral, not Claude-locked.** The skill is `agentskills-portable`: any runtime can be the active orchestrator. The human gate degrades from `AskUserQuestion` (Claude Code) to a plain-prose question elsewhere — do not bind the core loop to a Claude-only primitive. Adding a third model runtime needs its id in `roster`/`rotation` plus a sibling exec bridge for it.
 
 ## Autopilot demand test (gate for a future v2 mode)

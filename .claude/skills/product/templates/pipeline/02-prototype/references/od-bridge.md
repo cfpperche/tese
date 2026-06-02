@@ -8,7 +8,7 @@ The agent reads vendor paths directly under `.claude/skills/product/` — no too
 
 | What | Path |
 |------|------|
-| Design systems index (73 entries, lightweight) | `.claude/skills/product/references/od-catalog-index.json` |
+| Design systems index (150 entries, lightweight) | `.claude/skills/product/references/od-catalog-index.json` |
 | Per-system `DESIGN.md` | `.claude/skills/product/design-systems/<system>/DESIGN.md` |
 | Skill bundles (`web-prototype`, `saas-landing`, 31 others) | `.claude/skills/product/vendor/open-design/skills/<bundle>/` |
 | Prompt sources (`directions`, `discovery`, `system`) | `.claude/skills/product/vendor/open-design/prompts/<name>.ts` |

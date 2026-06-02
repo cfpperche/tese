@@ -4,7 +4,7 @@ The operational playbook for step 2's Turn 1: discovery → 3 direction families
 
 ## OD vendor grounding — read `od-bridge.md` first
 
-The Open Design (OD) vendor bundle ships **inside the `/product` skill**: 73 named `DESIGN.md` design systems at `.claude/skills/product/design-systems/<vendor>/DESIGN.md`, 33 skill bundles + the canonical 5-school direction library at `.claude/skills/product/vendor/open-design/`, all pinned and checksum-verified.
+The Open Design (OD) vendor bundle ships **inside the `/product` skill**: 150 named `DESIGN.md` design systems at `.claude/skills/product/design-systems/<vendor>/DESIGN.md`, 33 skill bundles + the canonical 5-school direction library at `.claude/skills/product/vendor/open-design/`, all pinned and checksum-verified.
 
 **The grounded path is `references/od-bridge.md`.** It teaches the catalogue lookup (`.claude/skills/product/references/od-catalog-index.json`), the per-system `Read` sequence, and the mandatory DS-citation rule. Each direction is composed from 1-4 named vendored design systems and cites them by name in `REPORT.md` — replacing "agent invents palette/typography from training data" with "agent reads a vendored, pinned `DESIGN.md`".
 

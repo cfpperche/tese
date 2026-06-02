@@ -42,11 +42,11 @@ The parent decides this and tells the sub-agent in CONTEXT. Two paths:
 
 **Catalog path** — when one of:
 - The brand-book § Visual Direction names a catalog system explicitly (e.g. "Cool Brutalist anchored on Composio + Voltagent + Warp")
-- The founder declared a preference for a known design system (Linear / Vercel / Notion / etc — 73 vendored systems catalogued at `.claude/skills/product/references/od-catalog-index.json`)
+- The founder declared a preference for a known design system (Linear / Vercel / Notion / etc — 150 vendored systems catalogued at `.claude/skills/product/references/od-catalog-index.json`)
 - The product is in a category where a catalog system is a strong fit and the brand-book left visual direction open
 
 Catalog path procedure:
-1. `Read` `.claude/skills/product/references/od-catalog-index.json` to see the available 73 systems (each entry carries `name + category + mood + palette_primary + vendor_path`).
+1. `Read` `.claude/skills/product/references/od-catalog-index.json` to see the available 150 systems (each entry carries `name + category + mood + palette_primary + vendor_path`).
 2. Pick 1 primary system (anchor) + optionally 1–2 secondary systems for accent treatment (e.g. *Composio anchor + Warp partial-fit on terminal-block layout*).
 3. The `vendor_path` field of each chosen entry is the relative path to its `DESIGN.md` (e.g. `.claude/skills/product/design-systems/linear/DESIGN.md`).
 4. `Read` the catalog DESIGN.md(s). They are dense (~10–20 KB each, 9 sections, full token specs). Derive the project's `tokens.css` directly from the catalog DESIGN.md's hex/typography/spacing values.

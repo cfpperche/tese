@@ -6,7 +6,7 @@ license: MIT
 compatibility: Compatible with any agentskills.io-compatible runtime (Claude Code, Codex CLI, and others). Uses only universal primitives — file IO and shell (the meeting.sh state machine + the codex-exec/claude-exec subprocess bridges). The human gate uses AskUserQuestion in Claude Code and degrades to a plain-prose question in runtimes without it, so any runtime can be the active orchestrator.
 metadata:
   agent0-portability-tier: agentskills-portable
-  version: "0.1"
+  version: "0.2"
 ---
 
 # /meeting — multi-party, multi-model deliberation
@@ -38,7 +38,7 @@ Git-tracked under `.agent0/meetings/<slug>-<ts>/meeting.md` (a meeting is a deci
 ## Subcommand: `start "<topic>"` — 🔓 Medium freedom
 
 1. **Validate** — empty/unparseable topic → refuse with `usage: /meeting start "<topic>" [--with claude,codex,human]`.
-2. **Participants** — parse `--with <ids>` (comma-separated). Default roster: `claude,codex,human`. The **rotation** (round-robin order of model speakers) is the roster with `human` removed, preserving order. The **convener** is your own runtime id.
+2. **Participants** — parse `--with <ids>` (comma-separated). Default roster: `claude,codex,human`. The **rotation** is the **fallback order** of model speakers (used only when no default is otherwise resolvable) — the roster with `human` removed, preserving order. It is not a round-robin; speaker selection is context-driven (see `turn`). The **convener** is your own runtime id.
 3. **Slug + timestamp** — kebab-case slug from the topic (lowercase, non-alphanumeric → `-`, collapse repeats, trim, max 40 chars); ISO-8601 UTC timestamp with `:`→`-` for filename safety.
 4. **Scaffold** — build a human-readable participants block (one `- <id> — <runtime> (web: allowed|n/a)` line per roster member), then call:
    ```bash
@@ -47,20 +47,22 @@ Git-tracked under `.agent0/meetings/<slug>-<ts>/meeting.md` (a meeting is a deci
      --convener <your-id> --roster "<roster-csv>" --rotation "<rotation-csv>" \
      --participants-block "<block>"
    ```
-   The script writes `meeting.md` with `turn_counter: 0`, `next_speaker` = first in rotation, `synthesis: pending`, and echoes the path.
-5. **Opening turn** — the convener (you) writes the first turn: a tight framing of the topic and the 1–2 questions the meeting should resolve. Write it to a temp file and append via `append-turn --speaker <your-id> --label "<your runtime>"`. (If the convener is not first in the rotation, set `--speaker <convener>` for this opening turn; the human can re-point afterwards.)
-6. **Report** — print the meeting path, the participants, and that the next step is `/meeting turn` (naming the current `next_speaker`).
+   The script writes `meeting.md` with `turn_counter: 0`, `next_speaker` = first in the fallback order, `synthesis: pending`, and echoes the path.
+5. **Opening turn** — the convener (you) writes the first turn: a tight framing of the topic and the 1–2 questions the meeting should resolve. Write it to a temp file and append via `append-turn --speaker <your-id> --label "<your runtime>"`. End it with a `Next: <id>` line if you want to hand the floor to a specific peer; otherwise the human directs the next turn with `--speaker`.
+6. **Report** — print the meeting path, the participants, and that the next step is `/meeting turn` (naming the current default speaker per `resolve-speaker`).
 
 ## Subcommand: `turn` — 🔓 Medium freedom: the v1 core loop
 
 Write exactly one turn.
 
 1. **Resolve target meeting** and read its state: `bash .agent0/skills/meeting/scripts/meeting.sh state <meeting.md>`.
-2. **Resolve speaker:**
-   - No `--speaker` → speaker = `next_speaker` (the legal default). Confirm with `meeting.sh check <file> <speaker>` (exit 0 expected).
-   - `--speaker <id>` → the human is orchestrating and may re-point. If `<id>` is not in the roster, refuse. If `<id>` differs from `next_speaker` and is a model, note "(human override — out of rotation order)" but proceed; the human is the orchestrator in v1.
+2. **Resolve speaker** (context-driven — there is no round-robin):
+   - The default is whatever the last turn's trailing `Next: <id>` directive set (or the persisted default). Resolve it mechanically with `meeting.sh resolve-speaker <file> [--speaker <id>]`, which applies the precedence `--speaker` > `next_speaker` header > first model in `rotation` (fallback order) > convener and roster-validates every source.
+   - No `--speaker` → speaker = `resolve-speaker <file>`.
+   - `--speaker <id>` → speaker = `resolve-speaker <file> --speaker <id>` (the human directs freely; this is the normal path, **not** an "out of order" exception — do not emit any override/rotation warning). A non-roster `<id>` is refused (exit 3).
 3. **Author the turn by speaker type:**
-   - **Speaker is YOU** (`<id>` == your runtime id) → author the turn inline. Respond to specific prior points; one substantive contribution, not a summary. If `--web`, do your own web research and end with a `Sources:` block. Write the body to a temp file.
+   - **Speaker is YOU** (`<id>` == your runtime id) → author the turn inline. Respond to specific prior points. A turn may be a full contribution **or** a short directed exchange — a focused question, an answer to a question put to you, a requested report, or a brief reaction (it need not be an essay). Don't summarize the whole meeting (that's synthesis). To hand the floor to a specific participant, end the body with a single final line `Next: <roster-id>` (exact id; prose `@mentions` don't count). If `--web`, do your own web research and end with a `Sources:` block (put any `Next:` line last, after Sources). Write the body to a temp file.
+   - Optional `--kind question|answer|report|reaction` is a lightweight hint you may record in the turn or use to shape a peer prompt — it is metadata only, never a required taxonomy or a gate on what counts as a valid turn.
    - **Speaker is a PEER model** → read `references/turn-prompt.md`, fill its slots (peer runtime, topic, roster, the `## Transcript` section so far, and the `--web` branch), write to a temp prompt file, and invoke the peer's bridge **read-only** (the peer returns text only; it must not edit files):
      ```bash
      # peer = codex:
@@ -71,14 +73,14 @@ Write exactly one turn.
        --task-file <prompt> --slug meeting-<slug>-turn-<n>
      ```
      Capture the bridge's `last-message.md` as the turn body.
-   - **Speaker is `human`** → ask the human for their contribution (or take the text they already gave inline). Write it to a temp file. The human turn does not consume a model's rotation slot.
+   - **Speaker is `human`** → ask the human for their contribution (or take the text they already gave inline). Write it to a temp file. A human turn may also end with a `Next: <id>` line to hand the floor; with no directive, the default next speaker is left unchanged.
 4. **Append (single writer = you):**
    ```bash
    bash .agent0/skills/meeting/scripts/meeting.sh append-turn <meeting.md> \
      --speaker <id> --label "<runtime label>" --body-file <body> [--require-sources]
    ```
-   Pass `--require-sources` whenever the turn was taken with `--web` — the append fails (writing nothing) if the body lacks a `Sources:` block. `append-turn` writes the turn section then advances `turn_counter` and `next_speaker`.
-5. **Report** — print the turn number just written, the new `next_speaker`, and remind the user they can `/meeting turn` again or `/meeting synthesize` when ready. **Stop after one turn** — do not chain turns autonomously.
+   Pass `--require-sources` whenever the turn was taken with `--web` — the append fails (writing nothing) if the body lacks a `Sources:` block. `append-turn` writes the turn section, advances `turn_counter`, and sets `next_speaker` from the body's trailing `Next: <id>` directive if present (a non-roster directive fails the append before anything is written); with no directive the default is left unchanged.
+5. **Report** — print the turn number just written, the resulting default next speaker, and remind the user they can `/meeting turn` again or `/meeting synthesize` when ready. **Stop after one turn** — do not chain turns autonomously.
 
 ## Subcommand: `synthesize` — 🔓 Medium freedom + 🔒 human gate
 
@@ -95,7 +97,7 @@ Triggered when the user asks to wrap up ("synthesize", "wrap the meeting"). Eith
 
 ## Subcommand: `state` — 🔒 Low freedom
 
-Print the resolved meeting's header via `meeting.sh state <meeting.md>` plus a one-line human summary (`turn N · next: <speaker> · synthesis: <status>`). This is also how a fresh runtime learns whose turn is legal without reading the prose body. The state output also carries a derived **autopilot-friction signal** (`model_turns` / `max_consecutive_model_turns` / `current_model_streak`) computed from the transcript.
+Print the resolved meeting's header via `meeting.sh state <meeting.md>` plus a one-line human summary (`turn N · next: <speaker> · synthesis: <status>`). This is also how a fresh runtime learns the default next speaker without reading the prose body. The state output also carries a derived **autopilot-friction signal** (`model_turns` / `max_consecutive_model_turns` / `current_model_streak`) computed from the transcript.
 
 ## Subcommand: `friction` — 🔒 Low freedom
 
@@ -127,7 +129,7 @@ If the first token is missing or not one of `start` / `turn` / `synthesize` / `s
 
 **Input:** `/meeting turn` when `next_speaker` is `codex` and the active runtime is Claude Code.
 
-**Expected:** `turn-prompt.md` filled with the topic + transcript-so-far; `codex-exec.sh --sandbox read-only --task-file …` invoked; the returned `last-message.md` becomes the turn body; the **active Claude runtime** appends it via `append-turn --speaker codex` (the peer never edits the file). `turn_counter` and `next_speaker` advance. Exactly one turn written.
+**Expected:** `turn-prompt.md` filled with the topic + transcript-so-far; `codex-exec.sh --sandbox read-only --task-file …` invoked; the returned `last-message.md` becomes the turn body; the **active Claude runtime** appends it via `append-turn --speaker codex` (the peer never edits the file). `turn_counter` advances; `next_speaker` is set from the returned turn's trailing `Next: <id>` directive if present, else left unchanged. Exactly one turn written.
 
 **Failure indicators:** Granted the peer write access. Chained multiple turns. Appended without advancing the header. Peer asked to edit `meeting.md` directly.
 
@@ -152,7 +154,7 @@ If the first token is missing or not one of `start` / `turn` / `synthesize` / `s
 _Consumer-extension surface — append consumer-local bullets here. Sync flags the file as `!! customized` (sha-compare is section-blind), but the conflict region is mechanically this section: take new upstream verbatim, re-add consumer bullets at the end._
 
 - v1 is **human-orchestrated only**. Autonomous LLM-as-orchestrator (one model selecting speakers and driving N turns) is a deliberately deferred, cost-gated future mode — do not auto-loop turns.
-- The script owns **state** (the header); the active runtime owns **content** (turn bodies + the synthesis prose). Keep that split — it is what makes turn legality and single-writer-per-turn mechanical.
+- The script owns **state** (the header); the active runtime owns **content** (turn bodies + the synthesis prose). Keep that split — it is what makes speaker selection and single-writer-per-turn mechanical.
 - Peers are distinct **model runtimes**, not theatrical personas. An explicit *contribution brief* in a turn ("take a security-review lens this turn") is fine; assigning a participant a standing role-play identity is not.
 - **Runtime-neutral by design (`agentskills-portable`).** Any runtime can be the active orchestrator — the body uses only file IO + shell (`meeting.sh`, the exec bridges), and the human gate degrades from `AskUserQuestion` to a plain-prose question. Do not reintroduce a Claude-only primitive in the core loop.
 - **Adding a third model runtime** (beyond Claude Code / Codex CLI) needs two things: (1) its participant id in the meeting's `roster`/`rotation`, and (2) an exec bridge for it (sibling to `codex-exec`/`claude-exec`) so the active runtime can fetch its turn. The transcript format and state machine already accommodate N participants.

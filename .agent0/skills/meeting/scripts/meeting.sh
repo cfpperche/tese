@@ -2,22 +2,29 @@
 # meeting.sh — deterministic state machine for a /meeting transcript.
 #
 # Owns the YAML front-matter header of a meeting.md file: the participant
-# roster, the round-robin rotation of model participants, the turn counter,
-# the next legal speaker, and the synthesis status. The conversational turn
-# *content* is authored by the active runtime; this script owns only the
-# machine-readable state, so turn legality and single-writer-per-turn are
+# roster, the fallback speaker order (`rotation`), the turn counter, the
+# derived default next speaker, and the synthesis status. The conversational
+# turn *content* is authored by the active runtime; this script owns only the
+# machine-readable state, so single-writer-per-turn and speaker selection are
 # mechanical and testable.
 #
-# Subcommands:
-#   init        scaffold a meeting.md from the template and fill the header
-#   state       print the parsed header fields as `key: value` lines
-#   next        print next_speaker
-#   check       exit 0 iff <speaker> is the legal next speaker (or human)
-#   advance     bump turn_counter and move next_speaker along the rotation
-#   append-turn append a turn section to the body, then advance
+# Speaker selection (spec 140) is context-driven, not round-robin: a turn body
+# MAY end with an explicit trailing `Next: <roster-id>` directive (exact match
+# only, never NLP). That marker becomes `next_speaker`. `next_speaker` is a
+# derived, reported default — NOT enforced legality. `rotation` is retained
+# only as a deterministic fallback order when no default is resolvable.
 #
-# Exit codes: 0 ok; 1 not-legal / not-found-as-expected; 2 usage / bad input;
-#   3 unknown participant (not in roster).
+# Subcommands:
+#   init            scaffold a meeting.md from the template and fill the header
+#   state           print the parsed header fields as `key: value` lines
+#   next            print next_speaker
+#   check           exit 0 iff <speaker> is in the roster (membership only)
+#   resolve-speaker print the resolved default speaker (precedence-ordered)
+#   advance         bump turn_counter; set next_speaker from --next if given
+#   append-turn     append a turn section to the body, then advance
+#
+# Exit codes: 0 ok; 1 not-found-as-expected / sources-missing; 2 usage / bad
+#   input; 3 unknown participant or bad address directive (not in roster).
 
 set -uo pipefail
 
@@ -73,20 +80,29 @@ csv_has() {
   return 1
 }
 
-# csv_successor <csv> <item> → element after item, wrapping; empty if item absent
-csv_successor() {
-  local csv=$1 item=$2 i n
-  IFS=',' read -ra _a <<< "$csv"
-  n=${#_a[@]}
-  for ((i=0; i<n; i++)); do
-    local cur="${_a[i]// /}"
-    if [ "$cur" = "$item" ]; then
-      local nxt="${_a[(i+1)%n]// /}"
-      printf '%s\n' "$nxt"
-      return 0
-    fi
-  done
-  return 1
+# csv_first <csv> → first element, whitespace-stripped; empty if csv empty
+csv_first() {
+  printf '%s' "$1" | cut -d, -f1 | tr -d ' '
+}
+
+# _marker_from_body <body_file> → if the LAST non-empty line is an explicit
+# `Next: <token>` address directive, echo the trimmed token (which may be
+# empty, multi-word, or a non-roster id — the CALLER validates) and return 0.
+# Any final line NOT beginning with `Next:` is "no marker" → return 1.
+# Parsing is exact-shape only; prose `@mentions` or the word "Next" mid-line
+# never count.
+_marker_from_body() {
+  local body=$1 last tok
+  last="$(awk 'NF{l=$0} END{print l}' "$body")"
+  case "$last" in
+    Next:*)
+      tok="${last#Next:}"
+      tok="${tok#"${tok%%[![:space:]]*}"}"   # ltrim
+      tok="${tok%"${tok##*[![:space:]]}"}"   # rtrim
+      printf '%s\n' "$tok"
+      return 0;;
+    *) return 1;;
+  esac
 }
 
 # compute_friction <file> → echoes "<total_model_turns> <max_consecutive_model> <current_trailing_streak>"
@@ -194,36 +210,61 @@ cmd_next() {
 }
 
 cmd_check() {
+  # Spec 140: membership-only. Speaker selection is context-driven (the
+  # addressing marker / --speaker decides who speaks), so `check` no longer
+  # enforces a round-robin "next legal speaker" — it only confirms the id is
+  # a known participant.
   local file=${1:-} speaker=${2:-}
   [ -f "$file" ] || die "check: file not found: $file"
   [ -n "$speaker" ] || die "check: <speaker> required"
-  local roster next
+  local roster
   roster="$(get_field "$file" roster)"
-  next="$(get_field "$file" next_speaker)"
   if ! csv_has "$roster" "$speaker"; then
     errln "check: '$speaker' is not in the roster ($roster)"
     return 3
   fi
-  # The human is the orchestrator and may interject at any point.
-  if [ "$speaker" = "human" ]; then
-    echo "legal: human may interject"
-    return 0
+  echo "ok: $speaker is in the roster"
+  return 0
+}
+
+cmd_resolve_speaker() {
+  # Print the resolved default speaker following the precedence:
+  #   --speaker <id>  >  next_speaker header  >  first model in rotation  >  convener
+  # Every source is roster-validated; a stale/non-roster value is skipped.
+  # An explicit --speaker that is not in the roster is an error (exit 3).
+  local file=${1:-}; shift || true
+  [ -f "$file" ] || die "resolve-speaker: file not found: $file"
+  local want=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --speaker) want=$2; shift 2;;
+      *) die "resolve-speaker: unknown arg: $1";;
+    esac
+  done
+  local roster; roster="$(get_field "$file" roster)"
+  if [ -n "$want" ]; then
+    csv_has "$roster" "$want" || { errln "resolve-speaker: '$want' is not in the roster ($roster)"; return 3; }
+    printf '%s\n' "$want"; return 0
   fi
-  if [ "$speaker" = "$next" ]; then
-    echo "legal: $speaker is the next speaker"
-    return 0
-  fi
-  errln "check: not '$speaker' turn; next legal speaker is '$next'"
+  local cand
+  cand="$(get_field "$file" next_speaker)"
+  if [ -n "$cand" ] && csv_has "$roster" "$cand"; then printf '%s\n' "$cand"; return 0; fi
+  cand="$(csv_first "$(get_field "$file" rotation)")"
+  if [ -n "$cand" ] && csv_has "$roster" "$cand"; then printf '%s\n' "$cand"; return 0; fi
+  cand="$(get_field "$file" convener)"
+  if [ -n "$cand" ] && csv_has "$roster" "$cand"; then printf '%s\n' "$cand"; return 0; fi
+  errln "resolve-speaker: no roster-valid default speaker"
   return 1
 }
 
 cmd_advance() {
   local file=${1:-}; shift || true
   [ -f "$file" ] || die "advance: file not found: $file"
-  local speaker="" synthesis=""
+  local speaker="" synthesis="" next=""
   while [ $# -gt 0 ]; do
     case "$1" in
       --speaker)   speaker=$2; shift 2;;
+      --next)      next=$2; shift 2;;
       --synthesis) synthesis=$2; shift 2;;
       *) die "advance: unknown arg: $1";;
     esac
@@ -236,21 +277,24 @@ cmd_advance() {
   fi
   [ -n "$speaker" ] || { [ -n "$synthesis" ] && { cmd_state "$file"; return 0; }; die "advance: --speaker or --synthesis required"; }
 
-  local roster rotation counter next
+  local roster counter
   roster="$(get_field "$file" roster)"
-  rotation="$(get_field "$file" rotation)"
   csv_has "$roster" "$speaker" || { errln "advance: '$speaker' not in roster"; return 3; }
+  # Validate the directed next-speaker BEFORE mutating anything (fail-before-write).
+  if [ -n "$next" ]; then
+    csv_has "$roster" "$next" || { errln "advance: --next '$next' not in roster ($roster)"; return 3; }
+  fi
 
   counter="$(get_field "$file" turn_counter)"
   counter=$((counter + 1))
   set_field "$file" turn_counter "$counter"
 
-  if csv_has "$rotation" "$speaker"; then
-    # a model spoke → next_speaker is its rotation successor
-    next="$(csv_successor "$rotation" "$speaker")"
+  # Spec 140: no round-robin. next_speaker changes only when this turn directed
+  # the floor via an explicit `Next: <id>` marker (passed through as --next).
+  # With no directive, the derived default persists unchanged.
+  if [ -n "$next" ]; then
     set_field "$file" next_speaker "$next"
   fi
-  # a human turn does not consume a model's rotation slot → next_speaker unchanged
   cmd_state "$file"
 }
 
@@ -285,6 +329,20 @@ cmd_append_turn() {
     fi
   fi
 
+  # Parse the addressing marker BEFORE mutating anything (fail-before-write).
+  # A final `Next: <id>` line directs the floor; an explicit-but-invalid
+  # directive (empty / multi-token / non-roster id) is an author error and
+  # fails the append. A final line not beginning with `Next:` = no marker.
+  local marker_next=""
+  if marker_tok="$(_marker_from_body "$body_file")"; then
+    if csv_has "$roster" "$marker_tok"; then
+      marker_next="$marker_tok"
+    else
+      errln "append-turn: invalid 'Next: $marker_tok' directive — not a roster id ($roster)"
+      return 3
+    fi
+  fi
+
   local counter; counter="$(get_field "$file" turn_counter)"
   local n=$((counter + 1))
 
@@ -310,24 +368,30 @@ cmd_append_turn() {
   ' "$file" > "$tmp" && cat "$tmp" > "$file"
   rm -f "$block" "$tmp"
 
-  # Advance only after the body is safely appended.
-  cmd_advance "$file" --speaker "$speaker" >/dev/null
+  # Advance only after the body is safely appended. A valid trailing marker
+  # directs the floor via --next; otherwise the derived default persists.
+  if [ -n "$marker_next" ]; then
+    cmd_advance "$file" --speaker "$speaker" --next "$marker_next" >/dev/null
+  else
+    cmd_advance "$file" --speaker "$speaker" >/dev/null
+  fi
   echo "appended turn $n by $speaker"
 }
 
 # ── dispatch ─────────────────────────────────────────────────────────────────
 main() {
   local sub=${1:-}
-  [ -n "$sub" ] || die "usage: meeting.sh <init|state|friction|next|check|advance|append-turn> ..."
+  [ -n "$sub" ] || die "usage: meeting.sh <init|state|friction|next|check|resolve-speaker|advance|append-turn> ..."
   shift
   case "$sub" in
-    init)        cmd_init "$@";;
-    state)       cmd_state "$@";;
-    friction)    cmd_friction "$@";;
-    next)        cmd_next "$@";;
-    check)       cmd_check "$@";;
-    advance)     cmd_advance "$@";;
-    append-turn) cmd_append_turn "$@";;
+    init)            cmd_init "$@";;
+    state)           cmd_state "$@";;
+    friction)        cmd_friction "$@";;
+    next)            cmd_next "$@";;
+    check)           cmd_check "$@";;
+    resolve-speaker) cmd_resolve_speaker "$@";;
+    advance)         cmd_advance "$@";;
+    append-turn)     cmd_append_turn "$@";;
     *) die "unknown subcommand: $sub";;
   esac
 }

@@ -12,7 +12,9 @@ printf 'Claude opens: I think we should ship X because of A and B.\n' > "$TMP/bo
 assert_contains "$OUT" "### Turn 1 — Claude Code (claude)" "turn 1 header written with label+id"
 assert_contains "$OUT" "Claude opens:" "turn 1 body appended"
 assert_contains "$OUT" "turn_counter: 1" "append advanced the counter"
-assert_eq "$("$MEETING" next "$OUT")" "codex" "append advanced next_speaker"
+# Spec 140: a turn with no trailing `Next:` marker leaves next_speaker unchanged
+# (no round-robin). Marker-driven advancement is covered in 08-addressing-marker.
+assert_eq "$("$MEETING" next "$OUT")" "claude" "no-marker append leaves next_speaker unchanged"
 
 # research-backed turn: require Sources, body without one fails BEFORE writing
 printf 'Codex: no citations here.\n' > "$TMP/body2.txt"

@@ -4,7 +4,7 @@ Skip this entire checklist if no DESIGN.md was detected at the project root (`DE
 
 When DESIGN.md exists, that file is the authoritative source. Direction picks BLEND with DESIGN.md (one direction may anchor on DESIGN.md tokens; the other two propose alternatives). REPORT.md's Brief Compliance section should call out which direction matches DESIGN.md vs which deviates.
 
-> **OD vendor note:** The skill ships the OD vendor library at `.claude/skills/product/design-systems/<vendor>/DESIGN.md` (73 vendored systems). Sub-agents pick from the catalogue index at `.claude/skills/product/references/od-catalog-index.json` and `Read` the chosen `DESIGN.md` paths directly. The repo-root DESIGN.md detection (if a consumer project has its own root-level `DESIGN.md` or `docs/DESIGN.md`) still takes precedence; the OD library is the grounding source when no project-specific DESIGN.md exists.
+> **OD vendor note:** The skill ships the OD vendor library at `.claude/skills/product/design-systems/<vendor>/DESIGN.md` (150 vendored systems). Sub-agents pick from the catalogue index at `.claude/skills/product/references/od-catalog-index.json` and `Read` the chosen `DESIGN.md` paths directly. The repo-root DESIGN.md detection (if a consumer project has its own root-level `DESIGN.md` or `docs/DESIGN.md`) still takes precedence; the OD library is the grounding source when no project-specific DESIGN.md exists.
 
 ---
 

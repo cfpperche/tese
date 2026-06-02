@@ -1,55 +1,55 @@
 {
   "$schema": "../../schemas/od-vendor-manifest.schema.json",
   "upstream_url": "https://github.com/nexu-io/open-design",
-  "pinned_sha": "d25a7aaf4219d69b6a3055ddda25fbce0dafd24d",
-  "pinned_at": "2026-04-30T20:18:32.516Z",
-  "last_check_sha": "34f66113a0f2391714d081d848e7dc48a5222de0",
-  "last_check_at": "2026-05-18T22:45:27.628Z",
+  "pinned_sha": "c128ffd53bba3f3080b2d0b7d656d1634016e10a",
+  "pinned_at": "2026-06-02T20:13:10.587Z",
+  "last_check_sha": "c128ffd53bba3f3080b2d0b7d656d1634016e10a",
+  "last_check_at": "2026-06-02T20:12:41.889Z",
   "vendored_paths": [
     {
       "src": "design-systems/",
       "dst": "design-systems/",
       "kind": "design-system-tree",
       "recursive": true,
-      "checksum": "sha256:bef62379fc1326a1a918800f64c18d72297360ac2a3cb1c556c61e33e062cb0a"
+      "checksum": "sha256:8c976d04060d19939ec61086c9166dacaaf77f9a15f4ebf5ee511cddba59ff38"
     },
     {
       "src": "skills/",
       "dst": "vendor/open-design/skills/",
       "kind": "skill-bundle-tree",
       "recursive": true,
-      "checksum": "sha256:6ab73f335f7c4c4a8087382773b3072420320be3cdf6d2bf9c9853229193c849"
+      "checksum": "sha256:db47ee6f24dbc206a3d9e07a2df57443e98ffede54a24a3cf058fa8a2701b24f"
     },
     {
       "src": "packages/contracts/src/prompts/system.ts",
       "dst": "vendor/open-design/prompts/system.ts",
       "kind": "prompt-source",
-      "checksum": "sha256:f1c160beae647c44534d846af63e795b5a17c1ee1373124a81ba406586a6f1a3"
+      "checksum": "sha256:080c6741103983725140929956d6704d47341c37fedd7e7efc46374ad9ca9c27"
     },
     {
       "src": "packages/contracts/src/prompts/discovery.ts",
       "dst": "vendor/open-design/prompts/discovery.ts",
       "kind": "prompt-source",
-      "checksum": "sha256:55f857da05901a4a476dff29f0843081a2b5f3ae764a27fa621b349744bb5a95"
+      "checksum": "sha256:d625d01a6381648521df5973cc6ec86156bc4c7ab4fcfaa0b83cf19d7a9cd847"
     },
     {
       "src": "packages/contracts/src/prompts/directions.ts",
       "dst": "vendor/open-design/prompts/directions.ts",
       "kind": "prompt-source",
-      "checksum": "sha256:6b0ef0288860c32f98cfa38f1fc1ba1ab3d5d52a9dd80ca3af982942bd85d899"
+      "checksum": "sha256:bb10b7922dcf6b1fe81f33310ba01a526d3df681f7b8e3ce265d8ab01c83d170"
     },
     {
       "src": "assets/frames/",
       "dst": "vendor/open-design/frames/",
       "kind": "frame-asset",
       "recursive": true,
-      "checksum": "sha256:75306617d9065ecfce2116082c88cde59160a61eb5126dd3f4cfce6be4b7bbe1"
+      "checksum": "sha256:1ef0d060e83c3c0b9624317ac8c2ed3bff801f2edd83c5fdf7f7fd5cc385d3be"
     },
     {
       "src": "templates/deck-framework.html",
       "dst": "vendor/open-design/templates/deck-framework.html",
       "kind": "template-asset",
-      "checksum": "sha256:c4a4ed7ae2d885fc9186fa42cc6693d78dc63f427e239b79f3268b1c4f1db039"
+      "checksum": "sha256:2b3f00fcd8077bdf384326b5a6579c8367739e26edca56481a0b0c7ec6b2739d"
     }
   ],
   "license_attribution": [
@@ -101,6 +101,18 @@
       "sha": "d25a7aaf4219d69b6a3055ddda25fbce0dafd24d",
       "at": "2026-05-14T00:00:00.000Z",
       "reason": "bootstrap port from anthill at pinned SHA; re-homed into /product skill in-tree after MCP vendor path was discontinued 2026-05-19"
+    },
+    {
+      "event": "bump",
+      "sha": "c128ffd53bba3f3080b2d0b7d656d1634016e10a",
+      "at": "2026-06-02T20:13:10.587Z",
+      "reason": "Advance OD pin to upstream HEAD — founder-approved catalogue refresh (spec 135 unblocked the validator)"
+    },
+    {
+      "event": "apply",
+      "sha": "c128ffd53bba3f3080b2d0b7d656d1634016e10a",
+      "at": "2026-06-02T20:29:06.453Z",
+      "reason": "auto-apply"
     }
   ]
 }
