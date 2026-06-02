@@ -1,6 +1,6 @@
 # 001 — Foundation: personal investment decision-support dashboard
 
-**Status:** draft
+**Status:** shipped
 **Owner:** Carlos Perche
 **Type:** personal tool (single user, local-first). NOT a product for other users — no auth, no multi-tenancy, no billing, no marketing surface.
 

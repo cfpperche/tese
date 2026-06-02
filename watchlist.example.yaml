@@ -1,0 +1,13 @@
+watchlist:
+  - ticker: NVDA
+    name: NVIDIA Corporation
+    market: US
+    instrument: STOCK
+    us_situs: true
+    thesis_tag: ai-core
+  - ticker: AMD
+    name: Advanced Micro Devices
+    market: US
+    instrument: STOCK
+    us_situs: true
+    thesis_tag: ai-core

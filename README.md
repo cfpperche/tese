@@ -22,15 +22,52 @@ is a query, not an archaeology dig. Multi-market (US core; China/HK + Korea sate
 
 ## Status
 
-Phase 1 (MVP) in spec.
+Phase 1 (MVP) implemented from `docs/specs/001-foundation/`.
 
 - **Phase 1 — source A:** market-data (quotes) + manual holdings + the ledger + export.
 - **Phase 2 — source B:** live IBKR portfolio (positions/P&L) behind the same interface + threshold flags.
 
 ## Stack
 
-Python + FastAPI + SQLite. Frontend TBD (see spec open questions).
+Python + FastAPI + SQLite. Static vanilla JS frontend served by FastAPI. Market data uses
+`yfinance` behind a `MarketDataSource` adapter for the first local cut.
 
 ## Run
 
-_TBD — defined at the plan stage._
+```bash
+python -m venv .venv
+.venv/bin/python -m pip install -e '.[dev]'
+cp watchlist.example.yaml watchlist.yaml
+.venv/bin/python -m uvicorn app.main:app --reload
+```
+
+Open `http://127.0.0.1:8000`.
+
+The app stores local data at `data/tese.sqlite` by default. `.env`, `watchlist.yaml`,
+`holdings.yaml`, SQLite files, and generated exports are gitignored because they can contain
+personal financial data.
+
+## Test
+
+```bash
+.venv/bin/python -m pytest
+.venv/bin/python -m ruff check .
+```
+
+## Export
+
+```bash
+.venv/bin/python -m app.cli export --tax-year 2026
+```
+
+The export writes `exports/<tax-year>/events.csv` and `exports/<tax-year>/summary.json`.
+
+## Import Opening Holdings
+
+```bash
+cp holdings.example.yaml holdings.yaml
+.venv/bin/python -m app.cli import-holdings --file holdings.yaml
+```
+
+Imported holdings become `OPENING_IMPORT` trade events with explicit `basis_provenance`; they do
+not create fake remittance-derived cost basis.

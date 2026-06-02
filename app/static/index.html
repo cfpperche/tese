@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>tese</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>tese</h1>
+      <div class="topbar-actions">
+        <button id="refresh-quotes" type="button">Quotes</button>
+        <button id="refresh" type="button">Refresh</button>
+      </div>
+    </header>
+    <main>
+      <section class="band">
+        <h2>Portfolio</h2>
+        <div class="metric-strip">
+          <span>Category</span>
+          <strong id="category-change">0.00%</strong>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Ticker</th>
+              <th>Qty</th>
+              <th>Avg Cost BRL</th>
+              <th>Basis BRL</th>
+              <th>Market USD</th>
+              <th>P&L BRL</th>
+              <th>Weight</th>
+            </tr>
+          </thead>
+          <tbody id="positions"></tbody>
+        </table>
+      </section>
+      <section class="band">
+        <h2>Watchlist Quotes</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Ticker</th>
+              <th>Price</th>
+              <th>Day Change</th>
+              <th>Currency</th>
+              <th>Freshness</th>
+            </tr>
+          </thead>
+          <tbody id="quotes"></tbody>
+        </table>
+      </section>
+      <section class="band actions">
+        <h2>Export</h2>
+        <input id="tax-year" type="number" value="2026" min="2000" max="2100">
+        <a id="summary-link" href="/api/export/2026/summary">summary.json</a>
+        <a id="events-link" href="/api/export/2026/events.csv">events.csv</a>
+      </section>
+      <section class="band ledger-grid">
+        <form id="event-form">
+          <h2>Ledger Event</h2>
+          <label>
+            Type
+            <select id="event-type">
+              <option value="remittance">remittance</option>
+              <option value="trade">trade</option>
+              <option value="dividend">dividend</option>
+              <option value="btc_origin">btc_origin</option>
+              <option value="year_end_balance">year_end_balance</option>
+            </select>
+          </label>
+          <textarea id="event-payload" rows="14" spellcheck="false"></textarea>
+          <button type="submit">Save</button>
+        </form>
+        <form id="correction-form">
+          <h2>Correction</h2>
+          <label>
+            Target
+            <input id="correction-target" required>
+          </label>
+          <label>
+            Correction ID
+            <input id="correction-id" required>
+          </label>
+          <label>
+            Date
+            <input id="correction-date" type="date" required>
+          </label>
+          <label>
+            Reason
+            <input id="correction-reason" required>
+          </label>
+          <button type="submit">Void</button>
+        </form>
+      </section>
+      <section class="band">
+        <h2>Audit Trail</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Type</th>
+              <th>Date</th>
+              <th>Ticker</th>
+              <th>Side</th>
+              <th>Voided By</th>
+            </tr>
+          </thead>
+          <tbody id="events"></tbody>
+        </table>
+      </section>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>

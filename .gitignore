@@ -18,6 +18,10 @@ venv/
 *.db
 holdings.yaml          # personal positions — keep out of git
 !holdings.example.yaml
+watchlist.yaml         # personal thesis universe — keep out of git
+!watchlist.example.yaml
+data/
+exports/
 
 # OS / editor
 .DS_Store

@@ -41,9 +41,11 @@ MarketDataSource (A)              PortfolioSource (B)
 SQLite tables. **Events are append-only and immutable**; positions/balances are derived or
 snapshotted. (Design hardened by the spec-001 Codex debate — see § 3.4.)
 
-**Shared event provenance.** Every event table carries: `id`, `created_at` (ingest timestamp,
-distinct from the economic `date`), `source` (`MANUAL | IMPORT | IBKR`), `voided_by` (nullable
-FK → a `correction` event), `notes`. Listed once here; omitted per-table below for brevity.
+**Shared event provenance.** The central `ledger_events` table carries: `id`, `created_at` (ingest
+timestamp, distinct from the economic `date`), `source` (`MANUAL | IMPORT | IBKR`), and `notes`.
+Export/API projections expose `voided_by` by deriving it from immutable `correction` rows; the
+original event row is never updated just to mark a correction. Listed once here; omitted per-table
+below for brevity.
 
 ```
 remittance        date, brl_amount, usd_credited, fx_rate, fx_provenance, iof, wire_fee,
@@ -75,10 +77,10 @@ labels this field **derived** (not contador-supplied). **Splits / corporate acti
 Phase 1** (documented gap, not silent).
 
 ### 3.2 Append-only is real: correct, never edit
-A mistake is fixed by appending a `correction` event that sets the target's `voided_by`; the
-original row is never mutated. Derivations and roll-ups skip voided events. This is what makes the
-audit trail in `compliance-tax.md` § C true rather than asserted. The ledger-entry UI exposes
-"correct" / "void", not "edit".
+A mistake is fixed by appending a `correction` event that targets the bad event. The original row is
+never mutated; `voided_by` is a projection/export field derived from correction rows. Derivations
+and roll-ups skip voided events. This is what makes the audit trail in `compliance-tax.md` § C true
+rather than asserted. The ledger-entry UI exposes "correct" / "void", not "edit".
 
 ### 3.3 Imported (pre-existing) positions — funding ≠ basis
 An imported holding is an `OPENING_IMPORT` trade, **not** a fake NORMAL buy. Its cost basis is NOT

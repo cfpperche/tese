@@ -1,0 +1,14 @@
+holdings:
+  - id: opening-nvda
+    date: "2026-01-01"
+    ticker: NVDA
+    market: US
+    currency: USD
+    instrument: STOCK
+    us_situs: true
+    qty: "1"
+    unit_price: "100.00"
+    commission: "0.00"
+    fx_to_brl: "5.00"
+    fx_provenance: contador supplied opening basis
+    basis_provenance: CONTADOR_SUPPLIED
