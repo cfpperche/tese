@@ -1,0 +1,64 @@
+/* tese — design tokens
+ * Calm financial instrument. Restrained palette; the only "loud" colors (green/red)
+ * are reserved for P&L and day-change so color always carries meaning.
+ * Single source of truth — frontend imports this; do not hardcode values elsewhere.
+ */
+
+:root {
+  /* ---- Surfaces (warm-neutral dark, low glare) ---- */
+  --bg:            #14171c;   /* app background */
+  --surface:       #1b1f26;   /* cards / panels */
+  --surface-2:     #232833;   /* table rows, hover */
+  --border:        #2c323d;
+
+  /* ---- Text ---- */
+  --text:          #e6e8ec;   /* primary */
+  --text-muted:    #9aa3b2;   /* secondary / labels */
+  --text-faint:    #6b7382;   /* timestamps, provenance */
+
+  /* ---- Brand accent (single calm accent) ---- */
+  --accent:        #5b8def;   /* links, focus, active nav */
+  --accent-weak:   #2a3a5c;
+
+  /* ---- Semantic: reserved for real meaning only ---- */
+  --gain:          #3fbf7f;   /* positive P&L / day change */
+  --loss:          #e5654f;   /* negative P&L / day change */
+  --flag:          #e0a64e;   /* threshold flags (informational, not alarm) */
+  --neutral:       var(--text-muted);
+
+  /* ---- Typography ---- */
+  --font-sans: ui-sans-serif, system-ui, "Inter", "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace; /* ALL numeric values */
+
+  --fs-xs:   0.75rem;
+  --fs-sm:   0.875rem;
+  --fs-base: 1rem;
+  --fs-lg:   1.25rem;
+  --fs-xl:   1.75rem;   /* portfolio total */
+  --lh-tight: 1.2;
+  --lh-base:  1.5;
+
+  /* ---- Spacing (4px base) ---- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  /* ---- Radius / elevation ---- */
+  --radius:    8px;
+  --radius-sm: 4px;
+  --shadow:    0 1px 2px rgba(0,0,0,0.4);
+
+  /* ---- Layout ---- */
+  --maxw: 1100px;
+}
+
+/* Numbers always monospace + tabular so columns align */
+.num, td.num, .money { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.gain { color: var(--gain); }
+.loss { color: var(--loss); }
+.flag { color: var(--flag); }
+.muted { color: var(--text-muted); }
+.faint { color: var(--text-faint); font-size: var(--fs-xs); }
