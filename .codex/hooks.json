@@ -1,0 +1,128 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.agent0/hooks/startup-brief.sh\"",
+            "statusMessage": "Reading Agent0 startup brief"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.agent0/hooks/context-inject.sh\"",
+            "statusMessage": "Selecting Agent0 context"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.agent0/hooks/session-stop.sh\"",
+            "statusMessage": "Checking session handoff"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "^apply_patch$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.agent0/hooks/memory-index-gate.sh\"",
+            "statusMessage": "Checking project-memory index"
+          }
+        ]
+      },
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.agent0/hooks/governance-gate.sh\"",
+            "statusMessage": "Checking destructive-op safety floor"
+          }
+        ]
+      },
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.agent0/hooks/secrets-preflight.sh\"",
+            "statusMessage": "Checking commit-shape + secrets-scan override"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "^apply_patch$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.agent0/hooks/session-track-edits.sh\"",
+            "statusMessage": "Tracking session edits"
+          }
+        ]
+      },
+      {
+        "matcher": "^apply_patch$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.agent0/hooks/memory-frontmatter-validate.sh\"",
+            "statusMessage": "Validating project-memory frontmatter"
+          },
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.agent0/hooks/memory-events-journal.sh\"",
+            "statusMessage": "Projecting project-memory index"
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.agent0/hooks/delegation-start-audit.sh\"",
+            "statusMessage": "Auditing subagent dispatch"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.agent0/hooks/delegation-verify.sh\"",
+            "statusMessage": "Verifying delegated task at close"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.agent0/hooks/delegation-stop.sh\"",
+            "statusMessage": "Closing delegation audit row"
+          }
+        ]
+      }
+    ]
+  }
+}

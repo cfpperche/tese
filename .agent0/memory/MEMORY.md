@@ -1,0 +1,2 @@
+- [Owner investment context that paces the build](owner-investment-context.md) — Why tese exists — the owner's BTC→global-equities rotation, autonomy-from-BR-brokers goal, and multi-market journey that the roadmap is paced to
+- [Product artifacts hand-built, not /product-generated](product-artifacts-handbuilt.md) — The docs/ foundation was authored manually from the /product structure; the skill was deliberately NOT invoked — do not re-run it

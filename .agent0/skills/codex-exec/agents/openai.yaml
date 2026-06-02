@@ -1,0 +1,9 @@
+interface:
+  display_name: "Codex exec bridge"
+  short_description: "Run a bounded local Codex CLI probe and capture its output."
+  default_prompt: "Run Codex on a bounded read-only review task."
+
+policy:
+  # User decision for spec 128: this bridge is discoverable by default.
+  # Safety lives in the wrapper defaults: read-only sandbox unless explicitly changed.
+  allow_implicit_invocation: true

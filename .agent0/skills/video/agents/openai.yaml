@@ -1,0 +1,26 @@
+# Codex skill metadata for /video (read by Codex CLI via .agents/skills/video).
+# Mirrors /image's openai.yaml — a paid/side-effecting, multi-runtime skill that
+# must NOT auto-fire. See .claude/skills/skill/references/portability-tiers.md
+# § Per-skill migration runbook.
+
+interface:
+  display_name: "Video generation"
+  short_description: "Produce video — deterministic (HyperFrames HTML→MP4, free) or generative (fal.ai, paid)."
+  default_prompt: "Produce a video with the video skill (pick --mode=code or --mode=generative)."
+
+policy:
+  # Side-effecting: code mode spawns a local Chrome render; generative mode
+  # spends real money. Never auto-trigger on a stray prompt word. Explicit
+  # `$video` / `/skills` invocation still works.
+  allow_implicit_invocation: false
+
+dependencies:
+  tools:
+    # Generative discovery only (optional). Generation itself uses the fal.run
+    # queue REST API directly (curl + FAL_KEY), NOT this MCP. Code mode needs no
+    # MCP at all — just the local Node/ffmpeg/Chrome toolchain.
+    - type: "mcp"
+      value: "fal-ai"
+      description: "fal.ai hosted MCP — model-discovery tools only; generation bypasses it via fal.run queue REST."
+      transport: "streamable_http"
+      url: "https://mcp.fal.ai/mcp"

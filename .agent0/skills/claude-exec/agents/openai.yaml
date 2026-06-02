@@ -1,0 +1,10 @@
+interface:
+  display_name: "Claude exec bridge"
+  short_description: "Run a bounded local Claude Code CLI probe and capture its output."
+  default_prompt: "Run Claude on a bounded read-only review task with an explicit permission mode."
+
+policy:
+  # Spec 129: discoverable by default. Safety lives in the wrapper being
+  # fail-closed — a vague implicit trigger that omits the required
+  # --permission-mode is refused before any paid Claude run.
+  allow_implicit_invocation: true

@@ -1,0 +1,27 @@
+# Codex skill metadata for /image (read by Codex CLI via .agents/skills/image).
+# First Agent0 portable skill to ship this file — it exists because /image has a
+# real MCP dependency AND must not auto-fire (paid image generation). Treat as
+# the reference template for future skills-with-MCP. See
+# .claude/skills/skill/references/portability-tiers.md § Per-skill migration runbook (step 5).
+
+interface:
+  display_name: "Image generation"
+  short_description: "Generate UI mockups and brand assets via fal.ai, with tiered cost control."
+  default_prompt: "Generate an image with the image skill."
+
+policy:
+  # Paid, side-effecting skill — never auto-trigger on a stray prompt word.
+  # Explicit `$image` / `/skills` invocation still works.
+  allow_implicit_invocation: false
+
+dependencies:
+  tools:
+    # Optional. Generation itself uses the fal.run REST API directly (curl, see
+    # spec 088) and needs only FAL_KEY — NOT this MCP. The MCP surfaces the
+    # discovery tools (search_models, get_model_schema, get_pricing,
+    # recommend_model) the agent uses to pick a tier intelligently.
+    - type: "mcp"
+      value: "fal-ai"
+      description: "fal.ai hosted MCP — model-discovery tools only; generation bypasses it via fal.run REST."
+      transport: "streamable_http"
+      url: "https://mcp.fal.ai/mcp"

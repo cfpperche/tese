@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <!--
+      GSAP via CDN. NOTE (determinism caveat): this is an external URL, so a
+      render needs network and is not hermetic. Vendor GSAP locally if your
+      project requires fully offline / byte-stable renders. The render
+      fingerprint records the engine version, but cannot pin a CDN response.
+    -->
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 1920px; height: 1080px; overflow: hidden;
+        background: radial-gradient(120% 120% at 50% 0%, #14213d 0%, #000000 70%);
+        /* 'Roboto' is auto-resolved deterministically by the HyperFrames engine
+           (fetched from Google Fonts + injected as @font-face at render). Prefer
+           an auto-resolved family over a system stack like -apple-system, which
+           triggers a lint warning and falls back to generic typography. */
+        font-family: "Roboto", sans-serif;
+        color: #fff;
+      }
+      #root { position: relative; width: 1920px; height: 1080px; }
+      .clip { position: absolute; left: 0; right: 0; text-align: center; }
+      #title    { top: 420px; font-size: 120px; font-weight: 800; letter-spacing: -2px; }
+      #subtitle { top: 590px; font-size: 44px; font-weight: 400; color: #9bb4e3; }
+      .accent { color: #4f7cff; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="5" data-width="1920" data-height="1080">
+      <div id="title" class="clip" data-start="0" data-duration="5" data-track-index="1">
+        Built with <span class="accent">Agent0</span>
+      </div>
+      <div id="subtitle" class="clip" data-start="0" data-duration="5" data-track-index="2">
+        deterministic video, rendered from code
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      tl.from("#title",    { opacity: 0, y: -60, duration: 1.0, ease: "power3.out" }, 0.2);
+      tl.from("#subtitle", { opacity: 0, y:  30, duration: 1.0, ease: "power2.out" }, 0.8);
+      tl.to("#title",      { scale: 1.04, duration: 3.0, ease: "sine.inOut" }, 1.5);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

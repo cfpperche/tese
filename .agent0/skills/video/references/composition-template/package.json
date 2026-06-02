@@ -1,0 +1,11 @@
+{
+  "name": "agent0-video-composition",
+  "private": true,
+  "type": "module",
+  "comment": "Pinned HyperFrames engine. Agent0 /video --mode=code depends on the npm ENGINE only, NOT the upstream agent-skill installer. Bump the pin via the refresh routine, not ad-hoc.",
+  "scripts": {
+    "dev": "npx --yes hyperframes@0.6.64 preview",
+    "check": "npx --yes hyperframes@0.6.64 lint",
+    "render": "npx --yes hyperframes@0.6.64 render"
+  }
+}

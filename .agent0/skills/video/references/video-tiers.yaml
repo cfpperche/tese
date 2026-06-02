@@ -1,0 +1,54 @@
+# video-tiers.yaml — refreshable tier→model table for /video --mode=generative
+#
+# This file is the ORACLE for generative tier resolution. The skill body and
+# gen.sh carry NO model IDs — they read this table at `prepare` time. Ships
+# mechanisms, not frozen stack opinions (the human/refresh owns the catalog).
+#
+# Refresh discipline: video models churn faster than image. Re-run the lookup
+# against fal.ai's pricing + model catalog roughly monthly; gen.sh emits a
+# `video-advisory:` when `snapshot_date` is older than `stale_after_days`.
+# Endpoint IDs below are snapshot candidates — verify the CURRENT id via fal
+# discovery (search_models / get_pricing) before first use; update + bump date.
+
+snapshot_date: "2026-05-31"
+stale_after_days: 60
+
+# Per-tier: a primary model candidate + price band + constraints. `price_usd_per_second`
+# is the estimate basis (gen.sh: estimate = price_per_second * duration_seconds).
+tiers:
+  draft:
+    description: "Fast, cheap iteration — storyboard previews, throwaway motion checks."
+    model: "fal-ai/wan/v2.2-a14b/image-to-video"
+    price_usd_per_second: 0.10
+    max_resolution: "720p"
+    max_duration_seconds: 5
+    audio: false
+    notes: "Wan 2.2 class. Cheapest preview path; verify current endpoint id at first use."
+
+  standard:
+    description: "Production short-form — strong multi-angle subject consistency."
+    model: "fal-ai/kling-video/v3/pro/image-to-video"
+    price_usd_per_second: 0.112
+    max_resolution: "1080p"
+    max_duration_seconds: 15
+    audio: false
+    notes: "Kling v3 Pro class. Good character-driven content; audio variants cost more."
+
+  premium:
+    description: "Highest fidelity — native 4K, best lip-sync, synchronized audio."
+    model: "fal-ai/veo/3.1"
+    price_usd_per_second: 0.40
+    max_resolution: "4K"
+    max_duration_seconds: 8
+    audio: true
+    notes: "Veo 3.1 class. $0.20/s (1080p no-audio) → $0.60/s (4K+audio); 0.40 is a mid estimate."
+
+# Optional alternative generative provider (debate: NOT the foundation, documented only).
+# Higgsfield MCP (geopopos/higgsfield_ai_mcp, MIT) requires a paid Higgsfield
+# account (HF_API_KEY/HF_SECRET, credits). Reach for it only if a consumer wants
+# Higgsfield's specific models; the fal.ai REST path above is canonical.
+alternative_providers:
+  - name: "higgsfield"
+    status: "optional"
+    auth: "HF_API_KEY + HF_SECRET (credits)"
+    note: "Not wired in v1 — documented per debate decision; fal.ai REST is the default."

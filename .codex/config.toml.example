@@ -1,0 +1,52 @@
+# Agent0 - Codex MCP recipes only
+#
+# This is only a catalog of disabled MCP server recipes. It is NOT a complete
+# Codex project config, and Agent0 does not own model, provider, sandbox,
+# approval, or tool-permission defaults.
+#
+# Workflow:
+#   1. If you want project-local MCP recipes, copy this file:
+#        cp .codex/config.toml.example .codex/config.toml
+#   2. Default: put secrets in .codex/.env.local (gitignored), not in this file.
+#   3. Flip enabled = true only for the MCP recipes you want active.
+#   4. Start Codex with: bash .agent0/tools/codex-local-env.sh
+#      Or export the required env vars before running codex directly.
+#
+# MCP recipes are copy-paste templates only. Consult each upstream MCP README
+# before enabling a block.
+#
+# Agent0 lifecycle hooks ship as tracked project config in .codex/hooks.json.
+# Codex will ask the user to review/trust project hooks on first launch after
+# hook definitions change. Treat .codex/config.toml as operator-local; do not
+# duplicate Agent0 hooks inline there.
+
+[mcp_servers.playwright]
+enabled = false
+command = "npx"
+args = ["-y", "@playwright/mcp@latest"]
+
+[mcp_servers.chrome-devtools]
+enabled = false
+command = "npx"
+args = ["-y", "chrome-devtools-mcp@latest"]
+
+[mcp_servers.dbhub]
+enabled = false
+command = "npx"
+args = ["-y", "@bytebase/dbhub@latest"]
+env_vars = ["DATABASE_URL"]
+
+[mcp_servers.laravel-boost]
+enabled = false
+command = "php"
+args = ["artisan", "boost:mcp"]
+
+[mcp_servers.next-devtools]
+enabled = false
+command = "npx"
+args = ["-y", "next-devtools-mcp@latest"]
+
+[mcp_servers.fal-ai]
+enabled = false
+url = "https://mcp.fal.ai/mcp"
+bearer_token_env_var = "FAL_KEY"

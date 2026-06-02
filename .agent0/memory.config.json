@@ -1,0 +1,13 @@
+{
+  "_comment": "Memory subsystem config. Read by .agent0/tools/memory-query.sh and memory-project.sh. Override values per-fork; missing keys fall back to documented defaults. Out-of-spec keys are ignored with a memory-config-advisory.",
+  "cap": {
+    "_comment_max_line_chars": "Maximum characters per projected line in .agent0/memory/MEMORY.md. Overflow emits a memory-cap-advisory at projection time; no auto-truncation. Default 250 chars.",
+    "max_line_chars": 250
+  },
+  "decay": {
+    "_comment_threshold_days": "Staleness threshold. Entries with score > threshold_days surface in the decay readout. Default 60 days.",
+    "threshold_days": 60,
+    "_comment_confirm_boost_days": "Each confirmed_count increment discounts this many days from the staleness score. Formula: score = (today - last_accessed_or_created_at).days - confirmed_count * confirm_boost_days. Default 14 days (2 weeks per confirm).",
+    "confirm_boost_days": 14
+  }
+}

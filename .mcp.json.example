@@ -1,0 +1,61 @@
+// Agent0 — MCP recipes
+//
+// This file is a TEMPLATE. Workflow:
+//   1. cp .mcp.json.example .mcp.json
+//   2. Open .mcp.json and REMOVE the leading `//` markers from the blocks
+//      you want active.
+//   3. JSON does NOT support `//` comments. Strict parsers reject them.
+//      The `.example` suffix is the "do not parse directly" signal; the
+//      copy step in (1) is where you make the file valid JSON.
+//   4. For DBHub: set DATABASE_URL in your shell or .env before launching
+//      claude. NEVER commit a populated DATABASE_URL to git.
+//   5. For Chrome DevTools MCP: confirm Chrome/Chrome-for-Testing is
+//      installed on the host (`which google-chrome`).
+//   6. For fal-ai: set FAL_KEY in your shell or .env. Recipe uses HTTP
+//      transport (not stdio — distinct from the other 5 blocks).
+//   7. Restart the Claude Code session — .mcp.json is loaded at start.
+//
+// These are copy-paste templates only. Consult each upstream MCP README for
+// capabilities, runtime requirements, and security stance before enabling.
+{
+  "mcpServers": {
+//    "playwright": {
+//      "command": "npx",
+//      "args": ["@playwright/mcp@latest"]
+//    },
+//    "chrome-devtools": {
+//      "command": "npx",
+//      "args": ["-y", "chrome-devtools-mcp@latest"]
+//    },
+//    "dbhub": {
+//      "command": "npx",
+//      "args": ["@bytebase/dbhub@latest"],
+//      "env": {
+//        "DATABASE_URL": "${DATABASE_URL}"
+//      }
+//    },
+//    "next-devtools": {
+//      "command": "npx",
+//      "args": ["-y", "next-devtools-mcp@latest"]
+//    },
+//    "laravel-boost": {
+//      "command": "php",
+//      "args": ["artisan", "boost:mcp"]
+//      // Requires: composer require laravel/boost --dev + php artisan boost:install.
+//      // Runs within the Laravel project (artisan must be present). Laravel 10-13.
+//      // Consult Laravel Boost upstream docs before enabling.
+//    },
+//    "fal-ai": {
+//      "type": "http",
+//      "url": "https://mcp.fal.ai/mcp",
+//      "headers": {
+//        "Authorization": "Bearer ${FAL_KEY}"
+//      }
+//      // Official fal.ai hosted MCP — 1000+ image/video/audio/3D/LLM models.
+//      // Free MCP layer; pay only for model inferences at standard fal.ai rates.
+//      // FIRST HTTP-transport block in this file — distinct shape from the
+//      // stdio (command/args) blocks above. Get FAL_KEY from fal.ai dashboard.
+//      // See .agent0/context/rules/image-gen.md for Agent0's image-generation posture.
+//    }
+  }
+}

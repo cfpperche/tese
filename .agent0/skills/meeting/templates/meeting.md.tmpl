@@ -1,0 +1,30 @@
+---
+meeting: {{SLUG}}
+topic: "{{TOPIC}}"
+created: {{CREATED}}
+convener: {{CONVENER}}
+mode: human-orchestrated
+roster: {{ROSTER}}
+rotation: {{ROTATION}}
+turn_counter: 0
+next_speaker: {{NEXT_SPEAKER}}
+synthesis: pending
+---
+
+# Meeting: {{TOPIC}}
+
+_A multi-party, multi-model deliberation. The front-matter above is the machine-readable state: `roster` is every participant id, `rotation` is the round-robin order of model participants (human excluded), `next_speaker` is whose turn is legal by default, `turn_counter` counts written turns, `synthesis` tracks the close-out. A fresh runtime reads only the front-matter to learn whose turn is legal — the body below is the chronological transcript._
+
+## Participants
+
+{{PARTICIPANTS_BLOCK}}
+
+## Transcript
+
+_Turns are appended below in order. Each turn header is `### Turn N — <runtime> (<id>)`; a research-backed turn carries a `Sources:` block listing the URLs used._
+
+## Synthesis
+
+_Written when a participant is asked to synthesize. Names the synthesizing runtime, the convergence, recorded disagreements, and a recommended next step (graduate to `/sdd refine` as seed context, or no-op). The human then accepts / redirects / ends._
+
+_(not yet synthesized)_

@@ -1,0 +1,31 @@
+{
+  "topic": "test fixture: validate the render path </script> breakout guard",
+  "topic_slug": "test-fixture-render",
+  "started_at": "2026-05-30T10-00-00Z",
+  "ended_at": "2026-05-30T10-20-00Z",
+  "state": "done",
+  "ideas": [
+    { "id": 1, "text": "an easy idea", "tag": "easy", "lens": null, "derived_from": null, "turn": 1 },
+    { "id": 2, "text": "a risky idea", "tag": "risky", "lens": null, "derived_from": null, "turn": 2 },
+    { "id": 3, "text": "a wild idea", "tag": "wild", "lens": null, "derived_from": null, "turn": 3 },
+    { "id": 101, "text": "a scamper derivation", "tag": "wild", "lens": "SCAMPER", "derived_from": 1, "axis": "combine", "turn": 4 }
+  ],
+  "questions_open": [
+    { "text": "is the render deterministic?" },
+    { "text": "does the </script> string stay escaped?" }
+  ],
+  "quotes": [
+    { "text": "this is a memorable line", "turn": 1 }
+  ],
+  "connections": [],
+  "lenses_applied": [
+    { "name": "SCAMPER", "applied_at": "2026-05-30T10-10-00Z", "summary": "1 derived idea", "axes_used": ["combine"] },
+    { "name": "Six Thinking Hats", "applied_at": "2026-05-30T10-15-00Z", "summary": "black hat applied", "hats_applied": ["black"], "six_hats": { "black": [ { "text": "the load-bearing assumption could be wrong" } ] } }
+  ],
+  "turns": [
+    { "n": 1, "summary": "opened: user named the topic" },
+    { "n": 2, "summary": "captured a risky idea" },
+    { "n": 3, "summary": "captured a wild idea" },
+    { "n": 4, "summary": "SCAMPER applied" }
+  ]
+}
