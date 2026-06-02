@@ -102,7 +102,29 @@ market data. Phase 2 swaps the manual holdings for the live IBKR feed without ch
 
 ## Done-when (Phase 1)
 
-A local `uvicorn` run shows a dashboard where the owner can see his AI-thesis watchlist and his
-(manually-entered) holdings with live quotes, day change, portfolio weight, and P&L — refreshed
-on an interval — with the data layer abstracted so Phase 2 can plug IBKR in behind the same
-interface.
+Phase 1 is done when **both** the dashboard **and** the compliance ledger work — filing-readiness is
+the North Star, so a dashboard alone is NOT "done":
+
+1. A local `uvicorn` run shows the thesis watchlist + holdings with live quotes, day change,
+   portfolio weight, and P&L (positions **derived from trade events**, not a parallel store — D8).
+2. The owner can record the full event set by hand — remittance, BTC-origin, BUY, dividend,
+   **partial SELL** (with `realized_gain_brl` **derived** via custo médio — § 3.1/D9), 31/12 balance —
+   and **correct/void** a bad event without editing it (D10).
+3. A one-command **contador-ready export** (CSV/JSON + summary) reproduces the **golden fixture**'s
+   expected output exactly (see `fixtures/`).
+4. The data layer is abstracted so Phase 2 can plug IBKR behind the same interface.
+
+**The golden fixture (`fixtures/golden-ledger.md`) is the executable contract** that drives the
+schema and the tests — write it (and its expected export) before any production code (TDD).
+
+## Spec-001 debate outcome (folded in)
+
+A two-round adversarial review with Codex (`codex-exec`) hardened this spec. Resolved:
+- **D8** trades = single source of truth; `holdings.yaml` → `OPENING_IMPORT` events.
+- **D9** `realized_gain_brl` derived via custo médio ponderado; fees rule fixed; splits out of Phase 1.
+- **D10** append-only enforced by `correction`/`voided_by` — correct, never edit.
+- **D11** funding ≠ cost basis — imported positions carry `basis_provenance`, not remittance-seeded.
+- **D12** Phase 1 US-only (USD→BRL); multi-market deferred to Phase 3; schema stays currency-aware.
+- Done-when corrected to require ledger + export (was dashboard-only — internal contradiction).
+
+See `docs/system-design.md` § 3 for the full data model.

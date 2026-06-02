@@ -38,28 +38,69 @@ MarketDataSource (A)              PortfolioSource (B)
 
 ## 3. Data model (the ledger — drives `compliance-tax.md`)
 
-SQLite tables. **Events are append-only**; positions/balances are derived or snapshotted.
+SQLite tables. **Events are append-only and immutable**; positions/balances are derived or
+snapshotted. (Design hardened by the spec-001 Codex debate — see § 3.4.)
+
+**Shared event provenance.** Every event table carries: `id`, `created_at` (ingest timestamp,
+distinct from the economic `date`), `source` (`MANUAL | IMPORT | IBKR`), `voided_by` (nullable
+FK → a `correction` event), `notes`. Listed once here; omitted per-table below for brevity.
 
 ```
-remittance        id, date, brl_amount, usd_credited, fx_rate, iof, wire_fee,
-                  source_account, broker, notes
-trade             id, date, ticker, market(US|HK|KR), currency, instrument(STOCK|ETF|ADR|UCITS),
-                  us_situs(bool), side(BUY|SELL), qty, unit_price, commission,
-                  fx_to_brl, brl_value, realized_gain_brl(nullable, SELL only), notes
-dividend          id, date, ticker, gross, currency, foreign_tax_withheld, net, fx_to_brl, notes
-btc_origin        id, date, brl_proceeds, acq_cost_brl, gain_brl, exempt_35k(bool),
-                  in1888_reportable(bool), notes      # the cost-base root of the foreign capital
-year_end_balance  id, tax_year, ticker, qty, price, fx_rate, brl_value, usd_value   # 31/12 snapshot
-instrument_ref    ticker(PK), name, market, instrument, us_situs, thesis_tag        # watchlist meta
-quote_cache       ticker, ts, price, day_change_pct, currency                       # from source A
+remittance        date, brl_amount, usd_credited, fx_rate, fx_provenance, iof, wire_fee,
+                  source_account, broker
+trade             date, ticker, market(US|HK|KR), currency, instrument(STOCK|ETF|ADR|UCITS),
+                  us_situs(bool), side(BUY|SELL),
+                  origin(NORMAL|OPENING_IMPORT),        # OPENING_IMPORT = pre-existing position
+                  qty, unit_price, commission, fx_to_brl, fx_provenance, brl_value,
+                  basis_provenance(VERIFIED|UNVERIFIED|CONTADOR_SUPPLIED),  # for OPENING_IMPORT
+                  linked_remittance_id(nullable),       # funding link IF it genuinely exists
+                  realized_gain_brl(DERIVED, SELL only) # computed, not hand-entered — see § 3.1
+dividend          date, ticker, gross, currency, foreign_tax_withheld, net, fx_to_brl, fx_provenance
+btc_origin        date, brl_proceeds, acq_cost_brl, gain_brl, exempt_35k(bool),
+                  in1888_reportable(bool)               # cost-base root of the foreign capital
+year_end_balance  tax_year, ticker, qty, price, price_provenance, fx_rate, fx_provenance,
+                  brl_value, usd_value                  # 31/12 snapshot
+correction        target_table, target_id, reason       # voids/replaces a prior event (§ 3.2)
+instrument_ref    ticker(PK), name, market, instrument, us_situs, thesis_tag   # watchlist meta
+quote_cache       ticker, ts, price, day_change_pct, currency                  # from source A
 ```
 
-**Derived (views / computed, not stored):**
-- `position` = Σ trades per ticker (qty, avg cost in BRL) → joined with `quote_cache` for live value,
-  weight, unrealized P&L.
+### 3.1 Realized gain is DERIVED, not entered (custo médio ponderado)
+Brazil mandates **weighted-average cost** for securities (no FIFO/LIFO choice), and Lei
+14.754/2023 realization follows the same basis. So on a SELL:
+`realized_gain_brl = net_proceeds_brl − (avg_cost_brl × qty_sold)`, deterministic. Fee rule:
+**buy commissions capitalize into BRL cost**; **sell commissions reduce BRL proceeds**. `avg_cost_brl`
+is the running weighted average over prior BUY/OPENING_IMPORT events for that ticker. The export
+labels this field **derived** (not contador-supplied). **Splits / corporate actions are out of
+Phase 1** (documented gap, not silent).
+
+### 3.2 Append-only is real: correct, never edit
+A mistake is fixed by appending a `correction` event that sets the target's `voided_by`; the
+original row is never mutated. Derivations and roll-ups skip voided events. This is what makes the
+audit trail in `compliance-tax.md` § C true rather than asserted. The ledger-entry UI exposes
+"correct" / "void", not "edit".
+
+### 3.3 Imported (pre-existing) positions — funding ≠ basis
+An imported holding is an `OPENING_IMPORT` trade, **not** a fake NORMAL buy. Its cost basis is NOT
+auto-seeded from a remittance FX rate — *funding provenance ≠ trade cost basis* (the position was
+bought at the trade's own price/FX, not at the remittance rate). `basis_provenance` marks it
+`UNVERIFIED` / `CONTADOR_SUPPLIED` and the UI shows that state; `linked_remittance_id` is set only
+when a genuine funding→trade link exists. Forcing a link creates fake auditability.
+
+### 3.4 Derived (views / computed, not stored)
+- `position` = Σ non-voided trades per ticker (qty, weighted `avg_cost_brl`) → joined with
+  `quote_cache` for live value, weight, unrealized P&L.
 - `foreign_assets_usd_total` → CBE flag (≥ US$ 1M).
 - `us_situs_usd_total` (Σ positions where `instrument_ref.us_situs`) → estate-tax flag (≥ US$ 60k).
 - Tax-year roll-ups: realized gains, dividends + withholding, remittance log.
+
+### 3.5 FX & valuation provenance
+Every monetary event stores both the rate and its `fx_provenance` (the rate **the owner used** is
+legally relevant, not a market reference). **Phase 1 is US-only → only USD→BRL is exercised**;
+non-USD trade/valuation paths are deferred to Phase 3 but the schema stays currency-aware (do not
+let `usd_value` become the sole valuation primitive). The 31/12 snapshot captures `price_provenance`
++ `fx_provenance` explicitly — the exact source is owner-chosen/owner-provided until
+`compliance-tax.md` § E is resolved with a contador.
 
 **Why append-only events + snapshots:** Brazilian filing needs *historical truth* (the FX rate on
 the day of each event, the 31/12 value), not just current state. Recomputing from a mutable
@@ -77,6 +118,17 @@ positions table would lose the legally-relevant point-in-time figures.
 - **D6** No tax *computation* of liability; informational roll-ups + export only (contador owns the
   binding numbers).
 - **D7** Secrets (`.env`) and personal positions (`holdings.yaml`, `*.sqlite`) are gitignored.
+- **D8** **Trades are the single source of portfolio truth.** `holdings.yaml` is an optional
+  bootstrap, ingested as `OPENING_IMPORT` trade events — not a parallel position store. Resolves the
+  spec-001 divergence (two truths) Codex flagged.
+- **D9** **`realized_gain_brl` is derived** via custo médio ponderado (§ 3.1), never hand-entered;
+  splits/corporate actions are an explicit Phase-1 gap.
+- **D10** **Append-only is enforced by `correction`/`voided_by`** (§ 3.2) — no row is ever mutated;
+  the UI offers correct/void, not edit.
+- **D11** **Funding ≠ cost basis** (§ 3.3): imported positions are not basis-seeded from remittance
+  FX; `basis_provenance` carries the unverified/contador-supplied state.
+- **D12** **Phase 1 is US-only** (USD→BRL); multi-market FX deferred to Phase 3, schema stays
+  currency-aware.
 
 ## 5. Security
 
