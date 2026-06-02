@@ -68,13 +68,27 @@ exercised in this fixture — its own case lives in a Phase-1 unit test, D11.)
 
 **Provenance present (non-null) on every monetary event:**
 - every remittance/trade/dividend/year_end_balance row carries `fx_provenance`; y1 also carries
-  `price_provenance`. `realized_gain_brl` exported with a `source = DERIVED` marker.
+  `price_provenance`. `realized_gain_brl` exported with a **`realized_gain_source = DERIVED`** marker
+  (distinct from the event `source` field `MANUAL|IMPORT|IBKR` — naming collision avoided per the
+  spec-001 validation round).
 
 ## Export shape (CSV/JSON)
 
-Two faces, same data:
-1. **`events.csv`** — every non-voided event, one row, with all stored fields + `source`/provenance.
-2. **`summary.json`** — `{ positions[], realized_gains_brl, dividends{gross,withheld,net},
-   remittances[], btc_origin, flags{us_situs_usd, cbe_usd}, generated_for_tax_year }`.
+Two faces, same data — and the audit face is **complete**, not pruned:
+1. **`events.csv`** — the **audit trail: ALL events, including voided (`t2`) and `correction` (`c1`)
+   rows**, one per line, with every stored field + `source`/provenance + `voided_by`. An audit trail
+   that omits voided rows is not an audit trail (spec-001 validation catch).
+2. **`summary.json`** — the **derived** view, computed over **non-voided** events only:
+   `{ positions[], realized_gains_brl, dividends{gross,withheld,net}, remittances[], btc_origin,
+   flags{us_situs_usd, cbe_usd}, generated_for_tax_year }`.
 
-The summary is what the owner hands the contador; `events.csv` is the audit trail behind it.
+The summary is what the owner hands the contador; `events.csv` is the full audit trail behind it.
+**Test must assert both:** `events.csv` contains `t2` + `c1`; `summary.json` math excludes `t2`.
+
+## Out-of-fixture (required Phase-1 unit test, not in this golden file)
+
+Per spec-001 validation, the `OPENING_IMPORT` / `basis_provenance` path (D8/D11) is **acceptable to
+keep out of this clean zero-to-first-aporte fixture**, but a separate Phase-1 test is **required
+before code**: a `holdings.yaml` import must create an `OPENING_IMPORT` trade with `basis_provenance`
+(UNVERIFIED/CONTADOR_SUPPLIED), optional `linked_remittance_id`, and **no fake remittance-derived
+basis**. `/plan` must list this as a task.
