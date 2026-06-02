@@ -57,8 +57,13 @@ next_commands_block() {
   printf '=== next ===\n'
   local any=0 next_actions routines due_count
 
+  # Only surface this when Next Actions holds a REAL actionable item — the
+  # handoff often parks a "Nothing actionable in the queue" line there, and
+  # pointing at it as a next action contradicts the section it points to
+  # (dogfood D1, both runtimes flagged this).
   next_actions="$(section_body "Next Actions" "$SESSION_FILE" 2>/dev/null | grep -v '^[[:space:]]*$' | head -1)"
-  if [ -n "$next_actions" ]; then
+  if [ -n "$next_actions" ] \
+     && ! printf '%s' "$next_actions" | grep -qiE 'nothing actionable|no actionable|^[-*[:space:]]*\**(nothing|none|empty)\b'; then
     printf -- '- handoff has queued Next Actions (see above)\n'
     any=1
   fi
@@ -91,9 +96,64 @@ EOF
   [ "$any" -eq 0 ] && printf '(nothing queued)\n'
 }
 
+# Is a single Active Work bullet a *pure idle claim* ("None", "working tree
+# clean", "all committed", "nothing pending", …)? Anchored, not substring-
+# contains — so "Goal: get the working tree clean" or "None of the tests pass"
+# (real work) do NOT count as idle (spec 139 dogfood, both runtimes flagged the
+# unanchored substring match as the core defect).
+is_idle_claim() {
+  local t
+  t="$(printf '%s' "$1" | sed -E 's/^[[:space:]]*[-*][[:space:]]*//; s/^[[:space:]]+//; s/[[:space:]]+$//')"
+  # "none/nothing of|but|except …" = negation of a set, NOT an idle declaration.
+  printf '%s' "$t" | grep -qiE '^(none|nothing)[[:space:]]+(of|but|other|except)\b' && return 1
+  # bare none/nothing only when terminal or followed by an idle continuation.
+  printf '%s' "$t" | grep -qiE '^(none|nothing)([[:space:]]*[].,;:)"]|[[:space:]]*$|[[:space:]]+(pending|in[[:space:]]+flight|queued|left|to[[:space:]]+do|here|yet)\b)' && return 0
+  # explicit idle phrasings.
+  printf '%s' "$t" | grep -qiE '^(n/?a|idle|nil|—|no[[:space:]]+active[[:space:]]+work|(working[[:space:]]+)?tree[[:space:]]+(is[[:space:]]+)?clean|all[[:space:]]+(work[[:space:]]+)?(committed|done|shipped|merged|pushed|landed)|everything[[:space:]]+(committed|done|shipped|pushed|landed|clean))\b' && return 0
+  return 1
+}
+
+# Spec 139: the judgment layer — reconcile the hand-written handoff against the
+# live tree (a resume surface must not claim "clean/idle" while files are dirty),
+# and name the probable in-flight spec so uncommitted work has a narrative.
+reconcile_block() {
+  git -C "$PROJECT_DIR" rev-parse --git-dir >/dev/null 2>&1 || return 0
+  local porcelain dirty_count first specs
+  # -uall so untracked dirs are not collapsed to their parent — we need the full
+  # docs/specs/NNN-<slug>/ path to infer in-flight work.
+  porcelain="$(git -C "$PROJECT_DIR" status --porcelain -uall 2>/dev/null)"
+  [ -n "$porcelain" ] || return 0   # clean tree → nothing to reconcile
+  dirty_count="$(printf '%s\n' "$porcelain" | grep -c .)"
+
+  # Banner only when the handoff's first Active Work bullet is a pure idle claim
+  # — contradiction-only, so a handoff that already describes the work raises no
+  # false alarm. (Known limitation: a metadata-only lead bullet can hide a later
+  # idle claim; documented in docs/specs/139-*/notes.md.)
+  if [ -f "$SESSION_FILE" ]; then
+    first="$(section_body "Active Work" "$SESSION_FILE" 2>/dev/null | grep -v '^[[:space:]]*$' | head -1)"
+    if [ -n "$first" ] && is_idle_claim "$first"; then
+      printf '⚠ RESUME WARNING: handoff Active Work says clean/idle, but the working tree has %s uncommitted change(s) — handoff may be stale.\n' "$dirty_count"
+    fi
+  fi
+
+  # Probable in-flight specs inferred from dirty paths (narrative for the
+  # porcelain). Strip the pre-arrow side of rename lines ("R old -> new") first
+  # so a renamed spec dir doesn't print both the stale and the new slug.
+  specs="$(printf '%s\n' "$porcelain" | sed -E 's/^.* -> //' | grep -oE 'docs/specs/[0-9]{3}-[a-z0-9-]+' | sed 's#docs/specs/##' | sort -u)"
+  if [ -n "$specs" ]; then
+    while IFS= read -r s; do
+      [ -n "$s" ] && printf 'probable active work: %s\n' "$s"
+    done <<EOF
+$specs
+EOF
+  fi
+}
+
 main() {
   printf 'AGENT0_STATUS\n'
-  printf 'generated: %sZ (on-demand, untruncated)\n\n' "$(date -u +%Y-%m-%dT%H:%M:%S)"
+  printf 'generated: %sZ (on-demand, untruncated)\n' "$(date -u +%Y-%m-%dT%H:%M:%S)"
+  reconcile_block
+  printf '\n'
   summarize_handoff
   printf '\n'
   git_dirty_block

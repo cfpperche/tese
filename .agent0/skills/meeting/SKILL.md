@@ -1,7 +1,7 @@
 ---
 name: meeting
 description: Convene a multi-party, multi-model deliberation — a turn-based conversation between a human (intermittently present), Claude Code, and Codex CLI — to think through a project topic or a vague idea. The collaborative sibling of /brainstorm (one agent diverging) and /sdd debate (two agents reviewing a locked spec). Any participant may take a research-backed turn that cites sources; the human is optional and can simply react to the synthesis. Human-orchestrated - one turn at a time. Subcommands - start "<topic>" [--with <ids>], turn [--speaker <id>] [--web], synthesize, state, list. Git-tracked transcripts live under .agent0/meetings/<slug>-<ts>/meeting.md.
-argument-hint: <start "<topic>" [--with <ids>] | turn [--speaker <id>] [--web] | synthesize | state | list>
+argument-hint: <start "<topic>" [--with <ids>] | turn [--speaker <id>] [--web] | synthesize | state | friction | list>
 license: MIT
 compatibility: Compatible with any agentskills.io-compatible runtime (Claude Code, Codex CLI, and others). Uses only universal primitives — file IO and shell (the meeting.sh state machine + the codex-exec/claude-exec subprocess bridges). The human gate uses AskUserQuestion in Claude Code and degrades to a plain-prose question in runtimes without it, so any runtime can be the active orchestrator.
 metadata:
@@ -25,7 +25,7 @@ The skill is symlink-shared across runtimes, so this file is byte-identical for 
 
 ## Argument parsing
 
-User invokes as `/meeting <subcommand> [args]`. The raw argument string is `$ARGUMENTS`. Parse it yourself: split on whitespace; the first token is the subcommand (`start` / `turn` / `synthesize` / `state` / `list`); the rest are subcommand args (the `start` topic may be a quoted string — strip surrounding quotes). Do not rely on `$1` / `$2` positional substitution.
+User invokes as `/meeting <subcommand> [args]`. The raw argument string is `$ARGUMENTS`. Parse it yourself: split on whitespace; the first token is the subcommand (`start` / `turn` / `synthesize` / `state` / `friction` / `list`); the rest are subcommand args (the `start` topic may be a quoted string — strip surrounding quotes). Do not rely on `$1` / `$2` positional substitution.
 
 Raw invocation: `$ARGUMENTS`
 
@@ -95,7 +95,11 @@ Triggered when the user asks to wrap up ("synthesize", "wrap the meeting"). Eith
 
 ## Subcommand: `state` — 🔒 Low freedom
 
-Print the resolved meeting's header via `meeting.sh state <meeting.md>` plus a one-line human summary (`turn N · next: <speaker> · synthesis: <status>`). This is also how a fresh runtime learns whose turn is legal without reading the prose body.
+Print the resolved meeting's header via `meeting.sh state <meeting.md>` plus a one-line human summary (`turn N · next: <speaker> · synthesis: <status>`). This is also how a fresh runtime learns whose turn is legal without reading the prose body. The state output also carries a derived **autopilot-friction signal** (`model_turns` / `max_consecutive_model_turns` / `current_model_streak`) computed from the transcript.
+
+## Subcommand: `friction` — 🔒 Low freedom
+
+Print the autopilot-friction measurement via `meeting.sh friction <meeting.md>`: the longest run of consecutive model turns with no human turn between them, and whether it meets the ≥4 mechanical threshold of the autopilot demand test (see `.agent0/context/rules/meeting.md` § Autopilot demand test). This is the near-term measurement that lets the rule-of-three gate for a future autopilot mode be evaluated from real meeting artifacts; it does not change the v1 loop.
 
 ## Subcommand: `list` — 🔒 Low freedom
 
@@ -103,10 +107,10 @@ Glob `.agent0/meetings/*/meeting.md`. For each, emit one line sorted by created 
 
 ## Unknown subcommand
 
-If the first token is missing or not one of `start` / `turn` / `synthesize` / `state` / `list`, refuse with:
+If the first token is missing or not one of `start` / `turn` / `synthesize` / `state` / `friction` / `list`, refuse with:
 
 ```
-/meeting <start "<topic>" [--with <ids>] | turn [--speaker <id>] [--web] | synthesize | state | list>
+/meeting <start "<topic>" [--with <ids>] | turn [--speaker <id>] [--web] | synthesize | state | friction | list>
 ```
 
 ## Eval Scenarios

@@ -35,12 +35,19 @@ check() {
 }
 
 # --- core harness files (missing/non-exec → broken) -------------------------
+# check_file <relpath> [exec|dir]
+#   exec → must be executable AND non-empty (presence != function, dogfood D2)
+#   dir  → must be a directory, not a stray file of that name (dogfood D2)
 check_file() {
-  local rel="$1" need_exec="${2:-no}" abs="$PROJECT_DIR/$1"
+  local rel="$1" mode="${2:-no}" abs="$PROJECT_DIR/$1"
   if [ ! -e "$abs" ]; then
     check broken "$rel" "missing"
-  elif [ "$need_exec" = "exec" ] && [ ! -x "$abs" ]; then
+  elif [ "$mode" = "dir" ]; then
+    if [ -d "$abs" ]; then check ok "$rel" "present"; else check broken "$rel" "exists but is not a directory"; fi
+  elif [ "$mode" = "exec" ] && [ ! -x "$abs" ]; then
     check broken "$rel" "exists but not executable"
+  elif [ "$mode" = "exec" ] && [ ! -s "$abs" ]; then
+    check broken "$rel" "present but empty"
   else
     check ok "$rel" "present"
   fi
@@ -54,7 +61,7 @@ check_file ".agent0/hooks/reminders-readout.sh" exec
 check_file ".agent0/hooks/routines-readout.sh" exec
 check_file ".agent0/tools/status.sh" exec
 check_file ".agent0/tools/doctor.sh" exec
-check_file ".agent0/context/rules"
+check_file ".agent0/context/rules" dir
 # Handoff absence is degraded, not fatal.
 if [ -f "$PROJECT_DIR/.agent0/HANDOFF.md" ]; then
   check ok ".agent0/HANDOFF.md" "present"
@@ -62,20 +69,45 @@ else
   check advisory ".agent0/HANDOFF.md" "missing — session handoff disabled"
 fi
 
-# --- hook wiring (per-runtime; missing one runtime → advisory) ---------------
+# --- hook wiring (per-runtime; contract validation, not substring) -----------
+# Spec 139: validate the actual SessionStart→startup-brief binding, not a bare
+# substring anywhere in the file (which passes on a comment / disabled block /
+# wrong event). Config absent → advisory (runtime not configured here); config
+# present but no valid binding → broken (the harness claims to be wired but is
+# not); bound AND target present+executable → ok. jq absent → degrade to the old
+# substring behavior tagged advisory (never crash).
 printf '\n=== hook wiring ===\n'
+BRIEF_REL=".agent0/hooks/startup-brief.sh"
+BRIEF_ABS="$PROJECT_DIR/$BRIEF_REL"
 wired_check() {
-  local label="$1" file="$2" needle="$3" abs="$PROJECT_DIR/$2"
+  local label="$1" file="$2" abs="$PROJECT_DIR/$2" cmd
   if [ ! -f "$abs" ]; then
     check advisory "$label" "$file absent (runtime not configured here)"
-  elif grep -q "$needle" "$abs" 2>/dev/null; then
-    check ok "$label" "references $needle"
+    return
+  fi
+  if ! command -v jq >/dev/null 2>&1; then
+    # jq is a REQUIRED binary (the binaries block already marks its absence
+    # broken → the rollup is broken regardless). Here we can only report that the
+    # wiring contract is unverifiable, not assert it; advisory is honest.
+    if grep -q "startup-brief" "$abs" 2>/dev/null; then
+      check advisory "$label" "references startup-brief (jq required to verify the binding — jq missing → rollup broken via binaries)"
+    else
+      check advisory "$label" "$file present; jq required to verify the binding — jq missing → rollup broken via binaries"
+    fi
+    return
+  fi
+  # Pull every SessionStart command string; match the one binding startup-brief.
+  cmd="$(jq -r '[.hooks.SessionStart[]?.hooks[]?.command // empty] | map(select(test("startup-brief"))) | .[0] // empty' "$abs" 2>/dev/null)"
+  if [ -z "$cmd" ]; then
+    check broken "$label" "$file present but no SessionStart hook binds startup-brief"
+  elif [ ! -x "$BRIEF_ABS" ]; then
+    check broken "$label" "binds startup-brief but $BRIEF_REL is missing/not executable"
   else
-    check advisory "$label" "$file present but no $needle reference"
+    check ok "$label" "SessionStart → startup-brief, target present+exec"
   fi
 }
-wired_check "claude SessionStart" ".claude/settings.json" "startup-brief"
-wired_check "codex hooks" ".codex/hooks.json" "startup-brief"
+wired_check "claude SessionStart" ".claude/settings.json"
+wired_check "codex hooks" ".codex/hooks.json"
 
 # --- git hooks activation ----------------------------------------------------
 printf '\n=== git hooks ===\n'

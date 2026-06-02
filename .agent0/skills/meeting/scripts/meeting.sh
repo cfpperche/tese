@@ -89,6 +89,24 @@ csv_successor() {
   return 1
 }
 
+# compute_friction <file> → echoes "<total_model_turns> <max_consecutive_model> <current_trailing_streak>"
+# Reads the ordered turn-header ids from the body. A "model turn" is any turn
+# whose speaker id is not `human`. The friction signal is the longest run of
+# consecutive model turns with no human turn between them — the mechanical half
+# of the demand test (see .agent0/context/rules/meeting.md § Demand test).
+compute_friction() {
+  local file=$1 id max=0 cur=0 total=0
+  while IFS= read -r id; do
+    [ -n "$id" ] || continue
+    if [ "$id" = "human" ]; then
+      cur=0
+    else
+      total=$((total + 1)); cur=$((cur + 1)); [ "$cur" -gt "$max" ] && max=$cur
+    fi
+  done < <(sed -n -E 's/^### Turn [0-9]+ — .* \(([A-Za-z0-9_-]+)\)[[:space:]]*$/\1/p' "$file")
+  printf '%s %s %s\n' "$total" "$max" "$cur"
+}
+
 # ── subcommands ──────────────────────────────────────────────────────────────
 
 cmd_init() {
@@ -146,6 +164,27 @@ cmd_state() {
   for k in meeting topic created convener mode roster rotation turn_counter next_speaker synthesis; do
     printf '%s: %s\n' "$k" "$(get_field "$file" "$k")"
   done
+  # Derived autopilot-friction signal (computed from the body, not the header).
+  local total maxc streak
+  read -r total maxc streak < <(compute_friction "$file")
+  printf 'model_turns: %s\n' "$total"
+  printf 'max_consecutive_model_turns: %s\n' "$maxc"
+  printf 'current_model_streak: %s\n' "$streak"
+}
+
+cmd_friction() {
+  local file=${1:-}
+  [ -f "$file" ] || die "friction: file not found: $file"
+  local total maxc streak threshold=4
+  read -r total maxc streak < <(compute_friction "$file")
+  printf 'model_turns: %s\n' "$total"
+  printf 'max_consecutive_model_turns: %s\n' "$maxc"
+  printf 'current_model_streak: %s\n' "$streak"
+  if [ "$maxc" -ge "$threshold" ]; then
+    printf 'demand-test (mechanical half): MET — %s consecutive model turns without human intervention (>= %s). A qualifying meeting also needs an explicit human "continue unattended" note.\n' "$maxc" "$threshold"
+  else
+    printf 'demand-test (mechanical half): not met — max %s consecutive model turns (< %s)\n' "$maxc" "$threshold"
+  fi
 }
 
 cmd_next() {
@@ -279,11 +318,12 @@ cmd_append_turn() {
 # ── dispatch ─────────────────────────────────────────────────────────────────
 main() {
   local sub=${1:-}
-  [ -n "$sub" ] || die "usage: meeting.sh <init|state|next|check|advance|append-turn> ..."
+  [ -n "$sub" ] || die "usage: meeting.sh <init|state|friction|next|check|advance|append-turn> ..."
   shift
   case "$sub" in
     init)        cmd_init "$@";;
     state)       cmd_state "$@";;
+    friction)    cmd_friction "$@";;
     next)        cmd_next "$@";;
     check)       cmd_check "$@";;
     advance)     cmd_advance "$@";;

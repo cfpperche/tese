@@ -62,6 +62,16 @@ Participants are distinct **model runtimes**, not theatrical role-play identitie
 - **Header is the source of truth.** Never hand-edit `turn_counter` / `next_speaker` / `synthesis`; route through `meeting.sh` so legality stays consistent.
 - **Runtime-neutral, not Claude-locked.** The skill is `agentskills-portable`: any runtime can be the active orchestrator. The human gate degrades from `AskUserQuestion` (Claude Code) to a plain-prose question elsewhere — do not bind the core loop to a Claude-only primitive. Adding a third model runtime needs its id in `roster`/`rotation` plus a sibling exec bridge for it.
 
+## Autopilot demand test (gate for a future v2 mode)
+
+A future opt-in "bounded loop runner" mode (one runtime drives N round-robin model turns between human checkpoints) is **deliberately not built** until demand is shown — a flag that exists gets used because it exists, which would contaminate the very signal that justifies it. The gate is a rule-of-three demand test.
+
+A **qualifying meeting** is a real v1 meeting where BOTH hold:
+1. the human dispatched **≥4 consecutive model turns** without taking a turn or redirecting, AND
+2. the human explicitly recorded wanting it to continue **unattended**.
+
+The mechanical half is measured now: `meeting.sh friction <meeting.md>` (and the `model_turns` / `max_consecutive_model_turns` / `current_model_streak` lines in `meeting.sh state`) report the longest run of consecutive model turns with no human turn between them, and flag whether the ≥4 mechanical threshold is met. **Three qualifying meetings** reopen planning on the autopilot build. Until then, only this measurement ships.
+
 ## Notes
 
 _Consumer-extension surface — append consumer-local bullets here. Sync flags the file as `!! customized` (sha-compare is section-blind); the conflict region is mechanically this section: take new upstream verbatim, re-add consumer bullets at the end._

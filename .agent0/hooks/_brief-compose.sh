@@ -74,7 +74,9 @@ summarize_handoff() {
 }
 
 githooks_advisory() {
-  if [[ -d "$PROJECT_DIR/.githooks" && "${CLAUDE_SKIP_GITHOOKS_HINT:-0}" != "1" ]]; then
+  # Honor both the Claude-named and the runtime-neutral skip flag, matching
+  # summarize_reminders / summarize_routines (dogfood D3 parity nit).
+  if [[ -d "$PROJECT_DIR/.githooks" && "${CLAUDE_SKIP_GITHOOKS_HINT:-0}" != "1" && "${AGENT0_SKIP_GITHOOKS_HINT:-0}" != "1" ]]; then
     local current_hookspath
     current_hookspath="$(git -C "$PROJECT_DIR" config --get core.hooksPath 2>/dev/null || true)"
     if [[ "$current_hookspath" != ".githooks" ]]; then
