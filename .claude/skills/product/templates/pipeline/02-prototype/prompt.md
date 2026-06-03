@@ -234,6 +234,8 @@ Read `references/checklist.md`. For EACH direction:
 **Anti-AI-slop P0** (`references/anti-patterns.md` for full list):
 - No purple/violet gradient backgrounds · no generic emoji feature icons · no left-coloured-border rounded cards as default · no hand-drawn SVG humans · Inter/Roboto/Arial as body only · no invented metrics · no filler copy · no motivational copy
 
+> **Craft floor (post-emit).** After you emit, an independent judge runs the deterministic anti-slop check (`scripts/craft-floor-check.ts`, canonical rules in `references/craft-floor.md`) over your directions and grades a `craft-floor` criterion — a default-Tailwind-indigo accent (`#6366f1`…), a two-stop purple→blue/blue→cyan gradient, emoji feature-icons, filler copy, or default-sans display when a serif is bound is a hard tell. Self-correct these now; the bound `DESIGN.md`'s own tokens are exempt (brand purple is fine — the Tailwind *default* is the tell).
+
 Two fix passes is normal. Do NOT emit with a failing dimension.
 
 ### 7. Write REPORT.md

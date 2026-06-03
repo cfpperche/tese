@@ -18,6 +18,7 @@ The step producers' briefs deliberately do **not** mention the judge. The judge 
 After a step's producer returns, the orchestrator (`SKILL.md`):
 
 1. **Anti-stub pre-filter.** `wc -c` each artifact against the step's `schema.md § Size floor` `min_size`. If any required artifact is below its floor it is a **stub** — the producer did not try. The orchestrator skips the judge call (judging a stub wastes an `opus` call) and re-dispatches the producer with a brief naming the stubbed artifact.
+1b. **Craft-floor pre-check (judge-units `02-prototype` + `15b-hifi-mood` only).** The orchestrator runs the deterministic anti-slop check (`scripts/craft-floor-check.ts`) over the unit's HTML artifacts and passes its JSON into the judge brief (`SKILL.md § Quality judge` step 1b). The judge's `craft-floor` criterion (`quality-checklist.md`) reads `summary.active_p0` — `fail` iff `> 0` — rather than re-discovering tells; this keeps deterministic detection out of the LLM grader (mirrors the Layer-1-at-submit boundary). The judge still weighs the two judge-only guidance tells (`references/craft-floor.md`) semantically. No other judge-unit runs this.
 2. **Dispatch the judge** on the artifacts that cleared the floor.
 3. **Record the verdict** to `.state.json` `quality_verdicts` and route it (§ Verdict → gate routing).
 

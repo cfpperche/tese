@@ -26,6 +26,7 @@ Each criterion has a stable `id` (the **bold label**) — the quality judge's ve
 - **mood-files** — `direction-a.html` plus 3-5 killer-flow lo-fi mood screens present
 - **token-anchors** — `direction-a.html` carries `:root`, `--background`, `--foreground`, `--primary`, `Most Popular`, and `<svg`
 - **od-citation** — cites ≥ 1 Open-Design vendor
+- **craft-floor** — no unexempted anti-slop tells. The orchestrator runs `scripts/craft-floor-check.ts` on the directions before this judge-unit and passes its JSON in the brief: `fail` iff `summary.active_p0 > 0` (a deterministic P0 tell — default-indigo/trust-gradient/emoji-icon/filler/sans-display-when-serif-bound — that the bound DESIGN.md does not legitimize). The judge does NOT re-discover these. It additionally weighs the two judge-only guidance tells from `references/craft-floor.md` (`rounded-card-colored-left-border`, `invented-metrics`) semantically. Applies to this unit and `15b-hifi-mood` only.
 
 ### 03 — Spec → `docs/functional-spec.md`
 - **gherkin** — `**Given**` / `**When**` / `**Then**` present; ≥ 3 Gherkin scenarios
@@ -102,6 +103,7 @@ Step 15 dispatches three parallel sub-agents; each is a separate judge-unit with
 - **mobile-first** — the `<style>` block carries ≥ 1 `@media (min-width: …)` breakpoint, the base CSS targets 375 px, and there are NO `style=` layout attributes (lone exception: a single dynamic value like a progress-bar width)
 - **on-brand-copy** — copy matches `brand-book.md` voice, respects `## Glossary § We don't say`, and is fixture-grounded (data from `docs/fixture-spec.md`, no lorem ipsum)
 - **contrast** — body text, large text, and interactive UI components meet WCAG 2.1 AA contrast against the screen's own `:root` token values (≥ 4.5:1 body text, ≥ 3:1 large text + UI components); the judge samples real rendered text/background token pairs. A screen shipping text or UI below its AA floor is a `fail`. This is the **shift-right verification** of step 04 (Validation)'s projected-mode accessibility `warn`s — step 04 audits the pre-token lo-fi prototype and can only *project* contrast; step 15b is the first surface where real brand tokens render, so it is where each projection is confirmed or refuted.
+- **craft-floor** — no unexempted anti-slop tells. Same instrument as step 02 (see `### 02 — … § craft-floor`): the orchestrator runs `scripts/craft-floor-check.ts` on the hi-fi screens, the judge grades `fail` iff `summary.active_p0 > 0` (brand-token-exempt) + weighs the two judge-only guidance tells from `references/craft-floor.md`. The deterministic `default-indigo-accent` here is the hi-fi counterpart of step 02's lo-fi check — it catches the un-bound Tailwind default surviving into real-token screens.
 
 ### 15c — Fixture spec → `docs/fixture-spec.md`
 - **structure** — `## Persona` + `## Entities` + `## Cross-Screen Consistency Notes` present
