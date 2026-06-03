@@ -238,6 +238,12 @@ COPY_CHECK_EXCLUDE=(
   ".agent0/hooks/propagation-advise.sh"
   ".agent0/context/rules/propagation-advisory.md"
   ".agent0/tests/propagation-advisory/*"
+  # Ephemeral OD-engine tarball-extraction cache (gitignored via
+  # .../runtime/od-sync/.gitignore → extracted-*/). The git-aware walk already
+  # excludes it (it is untracked); this entry is the always-applied backstop
+  # that keeps a non-git source's degraded find() from re-leaking the cache.
+  # See spec 144 (sync-harness-gitignore-aware-walk).
+  "*/runtime/od-sync/extracted-*"
 )
 
 # Structured merge handled by dedicated functions below
@@ -257,6 +263,12 @@ MERGED=0
 DRIFT=0
 STALE_UPDATED=0   # stale plain files auto-updated (consumer project == baseline, upstream moved)
 REMOVED=0         # upstream-removed files deleted from the consumer project
+CACHE_ORPHANS=0   # runtime-cache orphans removed (summarized, not listed per-file — spec 144)
+
+# Git-source detection + one-shot advisories for the git-aware walk (spec 144).
+AGENT0_GIT_SOURCE=0
+DIRTY_SOURCE_ADVISED=0
+NONGIT_ADVISED=0
 
 # ---------------------------------------------------------------------------
 # copy / check
@@ -294,6 +306,16 @@ matches_exclude() {
       $pat) return 0 ;;
     esac
   done
+  return 1
+}
+
+# Is this relpath an OD-engine runtime-cache file (spec 144)? Used by the
+# deletion pass to summarize the one-time cleanup of over-propagated caches
+# instead of emitting thousands of per-file removal lines.
+is_runtime_cache() {
+  case "$1" in
+    */runtime/od-sync/extracted-*) return 0 ;;
+  esac
   return 1
 }
 
@@ -527,21 +549,96 @@ record_manifest() {
   fi
 }
 
+# Is the Agent0 source a git work-tree? When it is, the two find-based manifest
+# expansions filter to git-tracked files ("managed = tracked in Agent0"), which
+# is what keeps gitignored runtime caches from propagating. When it is not (a
+# tarball / archive export with no .git), the walk falls back to a guarded find
+# — never blind: the COPY_CHECK_EXCLUDE runtime-cache backstop still applies.
+# See spec 144. Sets AGENT0_GIT_SOURCE once per run.
+detect_git_source() {
+  if git -C "$AGENT0_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    AGENT0_GIT_SOURCE=1
+  else
+    AGENT0_GIT_SOURCE=0
+  fi
+}
+
+# One-shot degraded-mode advisory for a non-git Agent0 source.
+advise_nongit_once() {
+  if [ "$NONGIT_ADVISED" -eq 0 ]; then
+    printf 'harness-sync: advisory — Agent0 source is not a git work-tree; degraded walk (static runtime-cache exclusion only)\n' >&2
+    NONGIT_ADVISED=1
+  fi
+}
+
+# One-shot dirty-source advisory. The git-aware walk uses the git INDEX for the
+# file-set but the WORKING TREE for content (consistent with the existing
+# baseline, where sha_of reads disk and agent0_commit is a provenance
+# breadcrumb, not a reproducibility contract). When the source is dirty under a
+# managed root, that file-set/content pairing can diverge from HEAD — surface it
+# (an unstaged deletion silently propagating a removal must be visible).
+advise_dirty_once() {
+  if [ "$DIRTY_SOURCE_ADVISED" -eq 0 ] && [ "$AGENT0_GIT_SOURCE" -eq 1 ]; then
+    local -a paths=("${COPY_CHECK_RECURSIVE[@]}")
+    local entry
+    for entry in "${COPY_CHECK_GLOBS[@]}"; do
+      paths+=("${entry%|*}")
+    done
+    if [ -n "$(git -C "$AGENT0_ROOT" status --porcelain -- "${paths[@]}" 2>/dev/null)" ]; then
+      printf 'harness-sync: advisory — Agent0 source work-tree is dirty under managed roots; manifest uses the git index file-set with working-tree content\n' >&2
+    fi
+  fi
+  DIRTY_SOURCE_ADVISED=1
+  return 0
+}
+
+# Emit the file-set under a recursive base, NUL-delimited, relative to AGENT0_ROOT.
+# git source → tracked files only; non-git source → guarded find.
+emit_recursive_files() {
+  local base="$1"
+  if [ "$AGENT0_GIT_SOURCE" -eq 1 ]; then
+    git -C "$AGENT0_ROOT" ls-files --cached -z -- "$base" 2>/dev/null
+  else
+    advise_nongit_once
+    ( cd "$AGENT0_ROOT" && find "$base" -type f -print0 2>/dev/null )
+  fi
+}
+
+# Emit maxdepth-1 files in `dir` whose basename matches shell `pattern`,
+# NUL-delimited. git source → tracked files only (post-filtered to dir depth +
+# pattern, no second find); non-git source → guarded find.
+emit_glob_files() {
+  local dir="$1" pattern="$2" f bn
+  if [ "$AGENT0_GIT_SOURCE" -eq 1 ]; then
+    while IFS= read -r -d '' f; do
+      [ "$(dirname "$f")" = "$dir" ] || continue
+      bn="$(basename "$f")"
+      # shellcheck disable=SC2254 — pattern is an intentional glob from COPY_CHECK_GLOBS
+      case "$bn" in
+        $pattern) printf '%s\0' "$f" ;;
+      esac
+    done < <(git -C "$AGENT0_ROOT" ls-files --cached -z -- "$dir" 2>/dev/null)
+  else
+    advise_nongit_once
+    ( cd "$AGENT0_ROOT" && find "$dir" -maxdepth 1 -type f -name "$pattern" -print0 2>/dev/null )
+  fi
+}
+
 walk_copy_check() {
   local base pattern dir relfile entry
   : > "$MANIFEST_RAW"
 
+  detect_git_source
+  advise_dirty_once
+
   for base in "${COPY_CHECK_RECURSIVE[@]}"; do
     if [ -d "$AGENT0_ROOT/$base" ]; then
-      while IFS= read -r relfile; do
-        if [ -n "$relfile" ]; then
-          if matches_exclude "$relfile"; then
-            continue
-          fi
-          record_manifest "$relfile"
-          process_file "$relfile"
-        fi
-      done < <(cd "$AGENT0_ROOT" && find "$base" -type f 2>/dev/null | sort)
+      while IFS= read -r -d '' relfile; do
+        [ -n "$relfile" ] || continue
+        matches_exclude "$relfile" && continue
+        record_manifest "$relfile"
+        process_file "$relfile"
+      done < <(emit_recursive_files "$base")
     fi
   done
 
@@ -549,15 +646,12 @@ walk_copy_check() {
     dir="${entry%|*}"
     pattern="${entry#*|}"
     if [ -d "$AGENT0_ROOT/$dir" ]; then
-      while IFS= read -r relfile; do
-        if [ -n "$relfile" ]; then
-          if matches_exclude "$relfile"; then
-            continue
-          fi
-          record_manifest "$relfile"
-          process_file "$relfile"
-        fi
-      done < <(cd "$AGENT0_ROOT" && find "$dir" -maxdepth 1 -type f -name "$pattern" 2>/dev/null | sort)
+      while IFS= read -r -d '' relfile; do
+        [ -n "$relfile" ] || continue
+        matches_exclude "$relfile" && continue
+        record_manifest "$relfile"
+        process_file "$relfile"
+      done < <(emit_glob_files "$dir" "$pattern")
     fi
   done
 
@@ -623,6 +717,21 @@ reconcile_deletions() {
 
     if [ "$dst_sha" = "$baseline_sha" ]; then
       # Clean orphan: consumer project copy untouched since sync — safe to remove.
+      # Runtime-cache orphans (the spec-144 over-propagated extracted-* trees can
+      # number in the thousands) are removed but summarized, not listed per-file.
+      if is_runtime_cache "$rel"; then
+        if [ "$MODE" = "check" ]; then
+          DRIFT=1
+        elif [ "$DRY_RUN" -eq 1 ]; then
+          REMOVED=$((REMOVED + 1))
+        else
+          rm -f "$dst"
+          prune_empty_parents "$rel"
+          REMOVED=$((REMOVED + 1))
+        fi
+        CACHE_ORPHANS=$((CACHE_ORPHANS + 1))
+        continue
+      fi
       if [ "$MODE" = "check" ]; then
         printf -- '- removed %s (would delete)\n' "$rel"
         DRIFT=1
@@ -657,6 +766,17 @@ reconcile_deletions() {
       CUSTOMIZED_REFUSED=$((CUSTOMIZED_REFUSED + 1))
     fi
   done < "$BASELINE_TSV"
+
+  # Summarize the runtime-cache orphan removals (spec 144) — one line, not N.
+  if [ "$CACHE_ORPHANS" -gt 0 ]; then
+    if [ "$MODE" = "check" ]; then
+      printf -- '- removed %s runtime-cache orphans under runtime/od-sync/extracted-* (would delete)\n' "$CACHE_ORPHANS"
+    elif [ "$DRY_RUN" -eq 1 ]; then
+      printf -- '- removed %s runtime-cache orphans under runtime/od-sync/extracted-* (dry-run)\n' "$CACHE_ORPHANS"
+    else
+      printf -- '- removed %s runtime-cache orphans under runtime/od-sync/extracted-*\n' "$CACHE_ORPHANS"
+    fi
+  fi
 
   rm -f "$manifest_paths"
 }

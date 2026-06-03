@@ -14,13 +14,6 @@
       "checksum": "sha256:8c976d04060d19939ec61086c9166dacaaf77f9a15f4ebf5ee511cddba59ff38"
     },
     {
-      "src": "design-templates/",
-      "dst": "vendor/open-design/skills/",
-      "kind": "skill-bundle-tree",
-      "recursive": true,
-      "checksum": "sha256:270ef413ff6526ade1ae9dd3dc1facd950881b113614e98db28305b30a57674b"
-    },
-    {
       "src": "packages/contracts/src/prompts/system.ts",
       "dst": "vendor/open-design/prompts/system.ts",
       "kind": "prompt-source",
