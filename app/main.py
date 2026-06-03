@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app.adapters.market.yfinance_source import YFinanceSource
+from app.api.deps import ConnDep
 from app.api.routes import dashboard, export, ledger, quotes
 from app.core.config import get_settings
 from app.db.connection import connect
@@ -22,6 +23,9 @@ def create_app(
         Path(watchlist_path) if watchlist_path is not None else settings.watchlist_path
     )
     app.state.market_data_source = market_data_source or YFinanceSource()
+    # app.state.conn is the startup migration handle and the seeding handle used
+    # by tests; request handlers use a per-request connection (see app.api.deps)
+    # so the shared connection is never used concurrently across the threadpool.
     app.state.conn = connect(app.state.db_path)
     migrate(app.state.conn)
 
@@ -31,8 +35,8 @@ def create_app(
     app.include_router(quotes.router)
 
     @app.get("/health")
-    def health():
-        app.state.conn.execute("SELECT 1").fetchone()
+    def health(conn: ConnDep):
+        conn.execute("SELECT 1").fetchone()
         return {"ok": True, "db_path": str(app.state.db_path)}
 
     static_dir = Path(__file__).with_name("static")

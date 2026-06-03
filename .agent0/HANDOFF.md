@@ -14,21 +14,40 @@ _Runtime-neutral handoff. Read at session start; update before ending a session.
 - **Spec-001 Phase-1 MVP implemented and validated** on 2026-06-02. `spec.md` is `shipped`;
   `plan.md`, `tasks.md`, and `notes.md` are present under `docs/specs/001-foundation/`.
 - **Application code now exists** under `app/`: FastAPI + SQLite + static vanilla JS frontend.
+- **Ledger-entry UI upgraded** from a JSON textarea to dedicated field controls, and request
+  handlers moved to per-request DB connections (race fix), on branch `chore/ledger-ui-conn-fix`
+  as of 2026-06-03. See Active Work.
 
 ## Active Work
 
-- None in flight. Spec-001 is implemented and validated:
-  `.venv/bin/python -m pytest` (7 passed, 1 upstream Starlette/httpx deprecation warning),
-  `.venv/bin/python -m ruff check .` (passed), Uvicorn smoke (`/health` + `/`), CLI export smoke,
-  and CLI holdings-import smoke.
+- None in flight. Two changes shipped this session on branch `chore/ledger-ui-conn-fix`
+  (commits `806a651` UI, race-fix commit follows) — to be merged to `main`:
+  1. **Dedicated-field ledger UI.** Replaced the JSON `<textarea>` with per-event-type dedicated
+     controls driven by a declarative `FIELD_SCHEMAS` in `app/static/app.js`
+     (+ `renderEventFields`/`buildEventPayload`); `index.html` hosts `<div id="event-fields">`;
+     `styles.css` got a 2-col field grid + checkbox row. Type coupling is 1:1 with the repo:
+     money/decimals serialize as STRINGS (backend does `Decimal(str(...))` — never send JS numbers),
+     `tax_year` as Number, booleans as real checkboxes, `side`/`origin` as `<select>` matching the
+     schema CHECK constraints; blank optionals omitted so backend defaults apply; after save fields
+     reset to defaults but the selected type is kept.
+  2. **Per-request DB connection (race fix).** Request handlers now resolve a fresh connection via
+     `app.api.deps.get_conn` (`ConnDep` = `Annotated[Connection, Depends(get_conn)]`) instead of the
+     shared `app.state.conn`. `app.state.conn` stays only for startup migrate + as the test seeding
+     handle. Routes `dashboard/ledger/quotes/export` + `/health` all converted.
+- **Verified:** `pytest` 9 passed (2 new isolation/parallel tests), `ruff` clean, Playwright browser
+  run (NVDA trade persisted with correct typing → position rendered), and a live-server concurrent
+  hammer (400 parallel requests across both endpoints → 0 non-200, 0 server tracebacks).
 - Golden fixture remains the contract:
   `docs/specs/001-foundation/fixtures/golden-ledger.md`.
 
 ## Next Actions
 
-1. Optional next product work: improve the ledger-entry UI from JSON templates to dedicated field
-   controls; add owner-entered current FX for dashboard BRL P&L; add market-hours scheduling.
-2. Keep Phase 2 deferred: IBKR adapter + threshold alerting after the local ledger/export surface
+1. **Merge `chore/ledger-ui-conn-fix` into `main`** (fast-forward) if not already done, and optionally
+   delete the branch. Push when ready (not pushed automatically).
+2. Optional next product work: add owner-entered current FX for dashboard BRL P&L; add market-hours
+   scheduling. NOTE: when APScheduler lands, it must NOT reuse `app.state.conn` from its job thread —
+   give scheduled jobs their own connection (same reasoning as the per-request fix).
+3. Keep Phase 2 deferred: IBKR adapter + threshold alerting after the local ledger/export surface
    is comfortable to use.
 
 ## Decisions & Gotchas

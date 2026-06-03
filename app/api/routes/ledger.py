@@ -1,20 +1,21 @@
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException
 
+from app.api.deps import ConnDep
 from app.db.repositories import LedgerRepository
 
 router = APIRouter(prefix="/api/ledger", tags=["ledger"])
 
 
 @router.get("/events")
-def list_events(request: Request):
-    return LedgerRepository(request.app.state.conn).list_events()
+def list_events(conn: ConnDep):
+    return LedgerRepository(conn).list_events()
 
 
 @router.post("/events")
-def create_event(payload: dict[str, Any], request: Request):
-    repo = LedgerRepository(request.app.state.conn)
+def create_event(payload: dict[str, Any], conn: ConnDep):
+    repo = LedgerRepository(conn)
     event_type = payload.pop("event_type")
     try:
         getattr(repo, f"add_{event_type}")(**payload)
@@ -27,8 +28,8 @@ def create_event(payload: dict[str, Any], request: Request):
 
 
 @router.post("/events/{event_id}/correct")
-def correct_event(event_id: str, payload: dict[str, Any], request: Request):
-    repo = LedgerRepository(request.app.state.conn)
+def correct_event(event_id: str, payload: dict[str, Any], conn: ConnDep):
+    repo = LedgerRepository(conn)
     repo.correct_event(
         event_id,
         correction_id=payload["correction_id"],
