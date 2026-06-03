@@ -14,11 +14,11 @@
       "checksum": "sha256:8c976d04060d19939ec61086c9166dacaaf77f9a15f4ebf5ee511cddba59ff38"
     },
     {
-      "src": "skills/",
+      "src": "design-templates/",
       "dst": "vendor/open-design/skills/",
       "kind": "skill-bundle-tree",
       "recursive": true,
-      "checksum": "sha256:db47ee6f24dbc206a3d9e07a2df57443e98ffede54a24a3cf058fa8a2701b24f"
+      "checksum": "sha256:270ef413ff6526ade1ae9dd3dc1facd950881b113614e98db28305b30a57674b"
     },
     {
       "src": "packages/contracts/src/prompts/system.ts",
@@ -112,6 +112,24 @@
       "event": "apply",
       "sha": "c128ffd53bba3f3080b2d0b7d656d1634016e10a",
       "at": "2026-06-02T20:29:06.453Z",
+      "reason": "auto-apply"
+    },
+    {
+      "event": "apply",
+      "sha": "c128ffd53bba3f3080b2d0b7d656d1634016e10a",
+      "at": "2026-06-02T23:14:44.712Z",
+      "reason": "auto-apply"
+    },
+    {
+      "event": "apply",
+      "sha": "c128ffd53bba3f3080b2d0b7d656d1634016e10a",
+      "at": "2026-06-02T23:30:00.182Z",
+      "reason": "auto-apply"
+    },
+    {
+      "event": "apply",
+      "sha": "c128ffd53bba3f3080b2d0b7d656d1634016e10a",
+      "at": "2026-06-03T00:55:18.844Z",
       "reason": "auto-apply"
     }
   ]

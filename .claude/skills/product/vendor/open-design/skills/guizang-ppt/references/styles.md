@@ -1,4 +1,4 @@
-<!-- vendored from open-design@454e8373fb2ac3362a3ed20374bd5709d5839c7a:skills/guizang-ppt/references/styles.md · do not edit -->
+<!-- vendored from open-design@c128ffd53bba3f3080b2d0b7d656d1634016e10a:design-templates/guizang-ppt/references/styles.md · do not edit -->
 # 杂志风方向（Magazine Directions）
 
 5 个**预设方向**，每个方向都把"用哪套主题色 / 哪些 layout / 多少 slide / 怎么写 chrome 文案"打包好，避免你在 6 问澄清里给出 5 个不相关的选项。

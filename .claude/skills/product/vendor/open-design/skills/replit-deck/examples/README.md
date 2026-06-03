@@ -1,4 +1,4 @@
-<!-- vendored from open-design@454e8373fb2ac3362a3ed20374bd5709d5839c7a:skills/replit-deck/examples/README.md · do not edit -->
+<!-- vendored from open-design@c128ffd53bba3f3080b2d0b7d656d1634016e10a:design-templates/replit-deck/examples/README.md · do not edit -->
 # Examples
 
 Four hand-written examples showing how `replit-deck` looks under different themes. Each is a self-contained HTML file — open in any browser, navigate with ← / →.

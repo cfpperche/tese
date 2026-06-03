@@ -1,4 +1,4 @@
-<!-- vendored from open-design@454e8373fb2ac3362a3ed20374bd5709d5839c7a:skills/finance-report/SKILL.md · do not edit -->
+<!-- vendored from open-design@c128ffd53bba3f3080b2d0b7d656d1634016e10a:design-templates/finance-report/SKILL.md · do not edit -->
 ---
 name: finance-report
 description: |
@@ -18,13 +18,14 @@ od:
   mode: prototype
   platform: desktop
   scenario: finance
-  featured: 10
   preview:
     type: html
     entry: index.html
   design_system:
     requires: true
     sections: [color, typography, layout, components]
+  craft:
+    requires: [rtl-and-bidi]
   example_prompt: "Build me a Q3 financial report for an early-stage SaaS — MRR, burn, gross margin, top accounts."
 ---
 

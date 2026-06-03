@@ -1,4 +1,4 @@
-<!-- vendored from open-design@454e8373fb2ac3362a3ed20374bd5709d5839c7a:skills/saas-landing/SKILL.md · do not edit -->
+<!-- vendored from open-design@c128ffd53bba3f3080b2d0b7d656d1634016e10a:design-templates/saas-landing/SKILL.md · do not edit -->
 ---
 name: saas-landing
 description: |
@@ -20,6 +20,8 @@ od:
   design_system:
     requires: true
     sections: [color, typography, layout, components]
+  craft:
+    requires: [typography, color, anti-ai-slop, laws-of-ux]
   inputs:
     - name: product_name
       type: string
@@ -120,4 +122,4 @@ Things to notice:
 - DESIGN.md is treated as a collaborator, not an override. The skill gives the agent authority to override when the brief conflicts, but never to invent new tokens.
 - `data-od-id` tagging is how we wire elements to comment mode. Skills that want comment-mode compatibility must annotate their output.
 
-See [`../../skills-protocol.md`](../../skills-protocol.md) for the full protocol.
+See [`../../docs/skills-protocol.md`](../../docs/skills-protocol.md) for the full protocol.

@@ -1,4 +1,4 @@
-<!-- vendored from open-design@454e8373fb2ac3362a3ed20374bd5709d5839c7a:skills/social-carousel/SKILL.md · do not edit -->
+<!-- vendored from open-design@c128ffd53bba3f3080b2d0b7d656d1634016e10a:design-templates/social-carousel/SKILL.md · do not edit -->
 ---
 name: social-carousel
 description: |
@@ -22,7 +22,6 @@ od:
   mode: prototype
   platform: desktop
   scenario: marketing
-  featured: 7
   preview:
     type: html
     entry: index.html

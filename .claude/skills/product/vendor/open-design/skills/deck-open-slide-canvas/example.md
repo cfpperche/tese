@@ -1,7 +1,0 @@
-<!-- vendored from open-design@c128ffd53bba3f3080b2d0b7d656d1634016e10a:skills/deck-open-slide-canvas/example.md · do not edit -->
-# 一句关键问题
-
-> Sea Indigo 调色, 单页 hero question 风格
-
-## 问题
-当生成内容的成本逼近零, 留下的只有品味 —— 你打算在哪一帧上, 让读者停下来?

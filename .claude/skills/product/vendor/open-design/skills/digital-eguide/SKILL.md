@@ -1,4 +1,4 @@
-<!-- vendored from open-design@454e8373fb2ac3362a3ed20374bd5709d5839c7a:skills/digital-eguide/SKILL.md · do not edit -->
+<!-- vendored from open-design@c128ffd53bba3f3080b2d0b7d656d1634016e10a:design-templates/digital-eguide/SKILL.md · do not edit -->
 ---
 name: digital-eguide
 description: |
@@ -23,20 +23,21 @@ od:
   mode: prototype
   platform: desktop
   scenario: marketing
-  featured: 2
   preview:
     type: html
     entry: index.html
   design_system:
     requires: true
     sections: [color, typography, layout, components]
-  example_prompt: "Design ‘The Creator's Style & Format Guide’ — cover page and one inside spread, lifestyle creator brand."
+  craft:
+    requires: [typography, typography-hierarchy, typography-hierarchy-editorial, rtl-and-bidi]
+  example_prompt: "Design 'The Creator's Style & Format Guide' — cover page and one inside spread, lifestyle creator brand."
 ---
 
 # Digital E-Guide Skill
 
-Produce a two-page digital guide preview side-by-side. Cover on the left,
-inside spread on the right. Lifestyle creator tone, lots of negative space,
+Produce a two-page digital guide preview side-by-side. Cover on the inline-start,
+inside spread on the inline-end. Lifestyle creator tone, lots of negative space,
 serif display headings, careful column rhythm.
 
 ## Workflow
@@ -63,8 +64,10 @@ serif display headings, careful column rhythm.
      - Display sub-title ("Write like you talk — only sharper.").
      - 2-column body: opening paragraph + a numbered 4-step list ("01 Pick
        the rule", "02 Drop the filler"…).
-     - Pull-quote pinned right-side: large italic display, accent color, with
-       attribution.
+     - Pull-quote pinned to inline-end: for Latin scripts use large italic display
+      and accent color; for Arabic, Persian, and Urdu use regular or light
+      emphasis (no italics); for Hebrew use regular or light emphasis (no
+      italics). Include attribution. (script-aware)
      - Bottom strip with "EXERCISE" callout (mono label + 1 sentence prompt
        in italic).
      - Footer: chapter title + page 18 mono.

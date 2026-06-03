@@ -1,4 +1,4 @@
-<!-- vendored from open-design@454e8373fb2ac3362a3ed20374bd5709d5839c7a:skills/blog-post/SKILL.md · do not edit -->
+<!-- vendored from open-design@c128ffd53bba3f3080b2d0b7d656d1634016e10a:design-templates/blog-post/SKILL.md · do not edit -->
 ---
 name: blog-post
 description: |
@@ -19,13 +19,14 @@ od:
   mode: prototype
   platform: desktop
   scenario: marketing
-  featured: 11
   preview:
     type: html
     entry: index.html
   design_system:
     requires: true
     sections: [color, typography, layout, components]
+  craft:
+    requires: [typography, typography-hierarchy, typography-hierarchy-editorial, rtl-and-bidi]
 ---
 
 # Blog Post Skill
@@ -45,7 +46,7 @@ Produce a single long-form article page — editorial layout, no chrome.
    - **Hero image** — a 16:9 placeholder block using a DS-tinted gradient or
      solid fill (no external images). Add a 1-line caption underneath.
    - **Body** — alternating prose paragraphs with at least:
-     - 1 pull quote (large display type, accent rule on the left).
+     - 1 pull quote (large display type, accent rule on the inline-start edge so the layout flips correctly under `dir="rtl"`).
      - 1 figure (image placeholder + caption).
      - 1 list (numbered or bulleted).
      - 1 inline blockquote.

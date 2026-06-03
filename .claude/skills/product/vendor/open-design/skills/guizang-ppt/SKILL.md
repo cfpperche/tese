@@ -1,4 +1,4 @@
-<!-- vendored from open-design@454e8373fb2ac3362a3ed20374bd5709d5839c7a:skills/guizang-ppt/SKILL.md · do not edit -->
+<!-- vendored from open-design@c128ffd53bba3f3080b2d0b7d656d1634016e10a:design-templates/guizang-ppt/SKILL.md · do not edit -->
 ---
 name: magazine-web-ppt
 description: 生成"电子杂志 × 电子墨水"风格的横向翻页网页 PPT（单 HTML 文件），含 WebGL 流体背景、衬线标题 + 非衬线正文、章节幕封、数据大字报、图片网格等模板。当用户需要制作分享 / 演讲 / 发布会风格的网页 PPT，或提到"杂志风 PPT"、"horizontal swipe deck"、"editorial magazine"、"e-ink presentation"时使用。
@@ -20,7 +20,6 @@ triggers:
 od:
   mode: deck
   scenario: marketing
-  featured: 9
   default_for: deck
   upstream: "https://github.com/op7418/guizang-ppt-skill"
   preview:

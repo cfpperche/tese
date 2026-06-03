@@ -1,4 +1,4 @@
-<!-- vendored from open-design@454e8373fb2ac3362a3ed20374bd5709d5839c7a:skills/replit-deck/references/themes.md · do not edit -->
+<!-- vendored from open-design@c128ffd53bba3f3080b2d0b7d656d1634016e10a:design-templates/replit-deck/references/themes.md · do not edit -->
 # Themes · replit-deck
 
 Eight complete visual systems captured from **replit.com/slides**. Each theme is a commitment — once the deck picks a theme, every slide inherits from that theme's token set via `<body data-theme="…">`. Do not override per-slide.

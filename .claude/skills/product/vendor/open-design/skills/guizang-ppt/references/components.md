@@ -1,4 +1,4 @@
-<!-- vendored from open-design@454e8373fb2ac3362a3ed20374bd5709d5839c7a:skills/guizang-ppt/references/components.md · do not edit -->
+<!-- vendored from open-design@c128ffd53bba3f3080b2d0b7d656d1634016e10a:design-templates/guizang-ppt/references/components.md · do not edit -->
 # 组件参考 · Components
 
 这是 `magazine-web-ppt` skill 的组件手册。template.html 已经定义好了所有样式，这里只写"这个组件长什么样、怎么用"。

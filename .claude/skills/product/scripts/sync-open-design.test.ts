@@ -22,6 +22,10 @@ import {
   buildCatalogVendors,
   pinnedContentAlreadyApplied,
   scanStaleCounts,
+  computeOrphans,
+  topLevelBundles,
+  findReferencedOrphans,
+  assertDisjointRoots,
 } from "./sync-open-design.js";
 
 let tmpRoot: string;
@@ -400,5 +404,66 @@ describe("scanStaleCounts — flag doc lines whose count != catalogue size", () 
       { path: "b.md", text: "shortlist 1-4 systems per direction" },
     ];
     expect(scanStaleCounts(noise, 150)).toEqual([]);
+  });
+});
+
+// ── Spec 142: orphan-prune pure cores ──────────────────────────────────────────
+describe("computeOrphans — on-disk minus staged (set difference)", () => {
+  test("returns dst-relative paths present on disk but not in the staged set", () => {
+    const onDisk = ["web-prototype/SKILL.md", "ad-creative/SKILL.md", "orbit-gmail/x.md"];
+    const staged = ["web-prototype/SKILL.md"];
+    expect(computeOrphans(onDisk, staged)).toEqual(["ad-creative/SKILL.md", "orbit-gmail/x.md"]);
+  });
+
+  test("empty when on-disk is a subset of staged", () => {
+    expect(computeOrphans(["a/x", "b/y"], ["a/x", "b/y", "c/z"])).toEqual([]);
+  });
+
+  test("result is sorted (deterministic)", () => {
+    expect(computeOrphans(["z/1", "a/1", "m/1"], [])).toEqual(["a/1", "m/1", "z/1"]);
+  });
+});
+
+describe("topLevelBundles — unique first path segments", () => {
+  test("collapses files to their bundle dir, unique + sorted", () => {
+    const rel = ["web-prototype/SKILL.md", "web-prototype/assets/template.html", "ad-creative/SKILL.md"];
+    expect(topLevelBundles(rel)).toEqual(["ad-creative", "web-prototype"]);
+  });
+
+  test("a top-level file maps to itself", () => {
+    expect(topLevelBundles(["INDEX.json", "ad-creative/SKILL.md"])).toEqual(["INDEX.json", "ad-creative"]);
+  });
+});
+
+describe("findReferencedOrphans — intersection with referenced names", () => {
+  test("returns orphan bundles that a live file references (block set)", () => {
+    const orphans = ["ad-creative", "web-prototype", "orbit-gmail"];
+    const referenced = new Set(["web-prototype", "saas-landing"]);
+    expect(findReferencedOrphans(orphans, referenced)).toEqual(["web-prototype"]);
+  });
+
+  test("empty when no orphan is referenced (the post-143 happy path)", () => {
+    const orphans = ["ad-creative", "apple-hig", "orbit-gmail"];
+    const referenced = new Set(["web-prototype", "saas-landing"]);
+    expect(findReferencedOrphans(orphans, referenced)).toEqual([]);
+  });
+});
+
+describe("assertDisjointRoots — reject overlapping recursive dst prefixes", () => {
+  test("passes for disjoint roots", () => {
+    expect(() =>
+      assertDisjointRoots(["design-systems/", "vendor/open-design/skills/", "vendor/open-design/frames/"]),
+    ).not.toThrow();
+  });
+
+  test("throws when one root is a path-prefix of another", () => {
+    expect(() => assertDisjointRoots(["vendor/open-design/", "vendor/open-design/skills/"])).toThrow(
+      /overlap/i,
+    );
+  });
+
+  test("a shared name-prefix that is NOT a path-segment prefix is fine", () => {
+    // "skills" vs "skills-extra" — not a path-segment ancestor
+    expect(() => assertDisjointRoots(["a/skills/", "a/skills-extra/"])).not.toThrow();
   });
 });

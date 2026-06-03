@@ -1,4 +1,4 @@
-<!-- vendored from open-design@454e8373fb2ac3362a3ed20374bd5709d5839c7a:skills/replit-deck/references/layouts.md · do not edit -->
+<!-- vendored from open-design@c128ffd53bba3f3080b2d0b7d656d1634016e10a:design-templates/replit-deck/references/layouts.md · do not edit -->
 # Layouts · replit-deck
 
 Ten paste-ready `<section class="slide">` blocks. Each has a **theme pairing** note — some layouts only look good in specific themes. Copy the block, replace `[REPLACE]` with real copy, tag with `data-screen-label`.

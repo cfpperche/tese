@@ -66,3 +66,5 @@ prototypes/
 
 .claude/*.lock
 .claude/scheduled_tasks.lock
+
+.claude/skills/product/runtime/od-sync/pruned-*/

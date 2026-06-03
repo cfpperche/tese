@@ -1,4 +1,4 @@
-<!-- vendored from open-design@454e8373fb2ac3362a3ed20374bd5709d5839c7a:skills/kanban-board/SKILL.md · do not edit -->
+<!-- vendored from open-design@c128ffd53bba3f3080b2d0b7d656d1634016e10a:design-templates/kanban-board/SKILL.md · do not edit -->
 ---
 name: kanban-board
 description: |
@@ -23,6 +23,8 @@ od:
   design_system:
     requires: true
     sections: [color, typography, layout, components]
+  craft:
+    requires: [state-coverage, laws-of-ux]
   example_prompt: "Make me a kanban board for a 5-person growth squad mid-sprint — backlog, doing, review, done."
 ---
 

@@ -1,4 +1,4 @@
-<!-- vendored from open-design@454e8373fb2ac3362a3ed20374bd5709d5839c7a:skills/web-prototype/references/checklist.md · do not edit -->
+<!-- vendored from open-design@c128ffd53bba3f3080b2d0b7d656d1634016e10a:design-templates/web-prototype/references/checklist.md · do not edit -->
 # Web prototype checklist
 
 Run this before emitting `<artifact>`. P0 = must pass; P1 = should pass; P2 = nice to have.

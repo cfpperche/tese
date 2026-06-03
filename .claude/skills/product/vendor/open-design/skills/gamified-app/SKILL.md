@@ -1,4 +1,4 @@
-<!-- vendored from open-design@454e8373fb2ac3362a3ed20374bd5709d5839c7a:skills/gamified-app/SKILL.md · do not edit -->
+<!-- vendored from open-design@c128ffd53bba3f3080b2d0b7d656d1634016e10a:design-templates/gamified-app/SKILL.md · do not edit -->
 ---
 name: gamified-app
 description: |
@@ -23,13 +23,14 @@ od:
   mode: prototype
   platform: mobile
   scenario: personal
-  featured: 4
   preview:
     type: html
     entry: index.html
   design_system:
     requires: true
     sections: [color, typography, layout, components]
+  craft:
+    requires: [state-coverage, animation-discipline]
   example_prompt: "Design a gamified life-management app — multi-screen mobile prototype: cover poster, today's quests with XP, and a quest detail. ‘Daily quests for becoming a better human.’"
 ---
 

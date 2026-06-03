@@ -574,6 +574,34 @@ async function cmdApply(): Promise<void> {
     return;
   }
 
+  // ── Orphan-prune planning (spec 142) — compute + guard BEFORE any Phase B write ──
+  // An orphan = a dst file on disk absent from the staged set (the content at
+  // pinned_sha). Compute per recursive vp and run the referenced-bundle guard now,
+  // so a hard-block throws before any live mutation (live vendor left intact).
+  const recursiveVps = manifest.vendored_paths.filter((vp) => vp.recursive);
+  assertDisjointRoots(recursiveVps.map((vp) => vp.dst));
+  const orphansByVp = new Map<VendoredPath, string[]>();
+  for (const vp of recursiveVps) {
+    const dstRootAbs = path.join(SKILL_ROOT, vp.dst);
+    if (!existsSync(dstRootAbs)) continue;
+    const stagedRel = staged
+      .filter((e) => e.vp === vp)
+      .map((e) => path.relative(dstRootAbs, e.dstFull));
+    const onDiskRel = walkFiles(dstRootAbs).map((f) => path.relative(dstRootAbs, f));
+    const orphans = computeOrphans(onDiskRel, stagedRel);
+    if (orphans.length > 0) orphansByVp.set(vp, orphans);
+  }
+  const allOrphanBundles = topLevelBundles([...orphansByVp.values()].flat());
+  if (allOrphanBundles.length > 0) {
+    const referenced = findReferencedOrphans(allOrphanBundles, scanReferencedBundles(allOrphanBundles));
+    if (referenced.length > 0) {
+      throw new Error(
+        `orphan-prune blocked: ${referenced.length} orphaned bundle(s) still referenced by pipeline templates — ` +
+        `${referenced.join(', ')}. Re-point the vendor mapping or update the references first. Live vendor left untouched.`,
+      );
+    }
+  }
+
   // ── Phase B: atomic move staging → final dst ─────────────────────────────
   console.log(`Validation passed (${staged.length} files). Moving staging → dst …`);
   for (const { dstFull, stagedPath, checksum, vp } of staged) {
@@ -599,6 +627,30 @@ async function cmdApply(): Promise<void> {
   }
 
   await fs.rm(stagingDir, { recursive: true, force: true });
+
+  // ── Orphan prune (spec 142) — move to trash journal, finalized after success ──
+  // The tree checksums above are staged-only, so the manifest already describes the
+  // post-prune dst. Move orphans OUTSIDE the vendored root (a quarantine inside it
+  // would be re-hashed by verifyManifest/walkFiles) so a mid-write crash is a local
+  // restore, not a re-download. The journal is rm'd once manifest+report succeed.
+  const trashDir = path.join(RUNTIME_DIR, `pruned-${sha.slice(0, 12)}`);
+  const prunedRel: string[] = [];
+  for (const [vp, orphans] of orphansByVp) {
+    const dstRootAbs = path.join(SKILL_ROOT, vp.dst);
+    for (const rel of orphans) {
+      const to = path.join(trashDir, vp.dst, rel);
+      mkdirSync(path.dirname(to), { recursive: true });
+      await fs.rename(path.join(dstRootAbs, rel), to);
+      prunedRel.push(path.join(vp.dst, rel));
+    }
+    // sweep now-empty dirs left under the dst root (never the root itself)
+    spawnSync('find', [dstRootAbs, '-mindepth', '1', '-type', 'd', '-empty', '-delete'], {
+      timeout: 30_000,
+    });
+  }
+  if (prunedRel.length > 0) {
+    console.log(`Pruned ${prunedRel.length} orphan file(s) → journal ${trashDir}`);
+  }
 
   // ── Atomic manifest update ───────────────────────────────────────────────
   manifest.history.push({ event: 'apply', sha, at, reason: 'auto-apply' });
@@ -640,6 +692,11 @@ async function cmdApply(): Promise<void> {
     `## Removed from tarball (${report.removed.length})`,
     ...report.removed.map((f) => `- \`${f}\``),
     '',
+    `## Pruned orphans (${prunedRel.length})`,
+    ...(prunedRel.length === 0
+      ? ['_none — on-disk recursive trees matched the pinned content_']
+      : prunedRel.map((f) => `- \`${f}\``)),
+    '',
     `## Stale count advisory (${staleHits.length})`,
     ...(staleHits.length === 0
       ? ['_none — all checked docs reference the current count_']
@@ -651,8 +708,14 @@ async function cmdApply(): Promise<void> {
     console.warn(`stale-count advisory: ${staleHits.length} doc line(s) reference an outdated system count (see apply report).`);
   }
   console.log(`Apply report → ${reportPath}`);
+
+  // ── Finalize prune: success → drop the trash journal (was a crash-recovery aid) ──
+  if (prunedRel.length > 0) {
+    await fs.rm(trashDir, { recursive: true, force: true });
+  }
+
   console.log(
-    `Done: ${report.added.length} added, ${report.updated.length} updated, ${report.removed.length} removed.`,
+    `Done: ${report.added.length} added, ${report.updated.length} updated, ${report.removed.length} removed, ${prunedRel.length} pruned.`,
   );
 }
 
@@ -822,6 +885,80 @@ export function scanStaleCounts(
     });
   }
   return hits;
+}
+
+// ── Orphan-prune pure cores (spec 142) ─────────────────────────────────────────
+// An "orphan" is a dst file present on disk but absent from the staged set (the
+// content at pinned_sha). `--apply` historically never deleted them, so an
+// upstream removal lingered forever and poisoned `verifyManifest`'s dst walk.
+// These are pure + exported for unit testing; the FS walk + the move-to-trash
+// prune execution live in cmdApply.
+
+/** dst-relative paths on disk minus the staged set, sorted (deterministic). */
+export function computeOrphans(onDiskRel: string[], stagedRel: string[]): string[] {
+  const staged = new Set(stagedRel);
+  return onDiskRel.filter((p) => !staged.has(p)).sort();
+}
+
+/** Unique first path segment (bundle dir, or a top-level file) per rel path, sorted. */
+export function topLevelBundles(relPaths: string[]): string[] {
+  return [...new Set(relPaths.map((p) => p.split('/')[0]).filter(Boolean))].sort();
+}
+
+/**
+ * Orphan bundles a live non-vendor file still references (set intersection), sorted.
+ * A non-empty result is a hard-block condition: pruning a referenced bundle would
+ * leave the repo pointing at a deleted path (spec 142 OQ2 — block, don't silently delete).
+ */
+export function findReferencedOrphans(orphanBundles: string[], referencedNames: Set<string>): string[] {
+  return orphanBundles.filter((b) => referencedNames.has(b)).sort();
+}
+
+/**
+ * Throw if any recursive dst root is a path-segment ancestor of another — a parent
+ * root would otherwise treat a child root's files as orphans and cross-delete them
+ * (spec 142 nested-root guard). Today the roots are disjoint; this makes it an invariant.
+ */
+export function assertDisjointRoots(recursiveDsts: string[]): void {
+  const norm = recursiveDsts.map((d) => d.replace(/\/+$/, ''));
+  for (let i = 0; i < norm.length; i++) {
+    for (let j = 0; j < norm.length; j++) {
+      if (i === j) continue;
+      if ((norm[j] + '/').startsWith(norm[i] + '/')) {
+        throw new Error(
+          `vendored-root overlap: "${recursiveDsts[i]}" is an ancestor of "${recursiveDsts[j]}" — orphan-prune would cross-delete`,
+        );
+      }
+    }
+  }
+}
+
+/**
+ * FS wrapper for the referenced-bundle guard: of the candidate orphan bundle names,
+ * return the set a live pipeline template (or SKILL.md) still references by path
+ * (`skills/<bundle>` as a path segment). A non-empty result hard-blocks the prune.
+ */
+function scanReferencedBundles(candidates: string[]): Set<string> {
+  const found = new Set<string>();
+  if (candidates.length === 0) return found;
+  const files = [
+    ...walkFiles(path.join(SKILL_ROOT, 'templates/pipeline')),
+    path.join(SKILL_ROOT, 'SKILL.md'),
+  ].filter((f) => existsSync(f) && /\.(md|markdown|ts|tsx|json)$/.test(f));
+  let blob = '';
+  for (const f of files) {
+    try {
+      blob += readFileSync(f, 'utf-8');
+    } catch {
+      /* unreadable file → skip */
+    }
+  }
+  for (const b of candidates) {
+    const esc = b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // referenced iff "skills/<bundle>" appears as a path segment (not a longer name)
+    if (new RegExp(`skills/${esc}(?![\\w-])`).test(blob)) found.add(b);
+  }
+  return found;
 }
 
 async function cmdVerify(): Promise<void> {

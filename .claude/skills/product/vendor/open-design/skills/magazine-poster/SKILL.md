@@ -1,4 +1,4 @@
-<!-- vendored from open-design@454e8373fb2ac3362a3ed20374bd5709d5839c7a:skills/magazine-poster/SKILL.md · do not edit -->
+<!-- vendored from open-design@c128ffd53bba3f3080b2d0b7d656d1634016e10a:design-templates/magazine-poster/SKILL.md · do not edit -->
 ---
 name: magazine-poster
 description: |
@@ -19,6 +19,7 @@ triggers:
   - "杂志海报"
   - "报纸版式"
 od:
+  featured: 0.02
   mode: prototype
   platform: desktop
   scenario: marketing

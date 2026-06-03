@@ -1,4 +1,4 @@
-<!-- vendored from open-design@454e8373fb2ac3362a3ed20374bd5709d5839c7a:skills/replit-deck/references/checklist.md · do not edit -->
+<!-- vendored from open-design@c128ffd53bba3f3080b2d0b7d656d1634016e10a:design-templates/replit-deck/references/checklist.md · do not edit -->
 # Self-check · replit-deck
 
 Run this list silently before emitting `<artifact>`. Anything failing at **P0** is a regression — fix it, don't ship. P1 means the deck is emittable but will feel AI-generated to a designer; fix if you have two passes left. P2 is polish.

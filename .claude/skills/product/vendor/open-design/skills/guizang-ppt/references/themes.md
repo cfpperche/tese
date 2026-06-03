@@ -1,4 +1,4 @@
-<!-- vendored from open-design@454e8373fb2ac3362a3ed20374bd5709d5839c7a:skills/guizang-ppt/references/themes.md · do not edit -->
+<!-- vendored from open-design@c128ffd53bba3f3080b2d0b7d656d1634016e10a:design-templates/guizang-ppt/references/themes.md · do not edit -->
 # 主题色预设（Themes）
 
 5 套精心调配的主题色板,保证"电子杂志 × 电子墨水"的美学不垮。**不允许用户自定义颜色——色彩搭配错了画面瞬间变丑**,只从以下预设中挑选。

@@ -1,4 +1,4 @@
-<!-- vendored from open-design@454e8373fb2ac3362a3ed20374bd5709d5839c7a:skills/simple-deck/references/layouts.md · do not edit -->
+<!-- vendored from open-design@c128ffd53bba3f3080b2d0b7d656d1634016e10a:design-templates/simple-deck/references/layouts.md · do not edit -->
 # Simple deck slide layouts
 
 **8 paste-ready slide skeletons.** Drop into `<body>` of `assets/template.html`. Don't write slides from scratch — pick the closest layout, paste, swap copy.
