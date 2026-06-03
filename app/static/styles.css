@@ -137,29 +137,48 @@ label {
   font-size: 13px;
 }
 
-select,
-textarea {
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.field-grid label {
+  min-width: 0;
+}
+
+.field-grid input,
+.field-grid select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.checkbox-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  align-self: end;
+  min-height: 34px;
+}
+
+.checkbox-row input {
+  min-height: 0;
+  width: auto;
+}
+
+select {
+  min-height: 34px;
+  padding: 0 10px;
   border: 1px solid var(--line);
   border-radius: 6px;
   font: inherit;
   background: #ffffff;
 }
 
-select {
-  min-height: 34px;
-  padding: 0 10px;
-}
-
-textarea {
-  min-height: 220px;
-  padding: 10px;
-  font-family: "SFMono-Regular", Consolas, monospace;
-  font-size: 13px;
-  resize: vertical;
-}
-
 @media (max-width: 760px) {
-  .ledger-grid {
+  .ledger-grid,
+  .field-grid {
     grid-template-columns: 1fr;
   }
 

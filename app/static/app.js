@@ -5,69 +5,155 @@ const yearInput = document.querySelector("#tax-year");
 const summaryLink = document.querySelector("#summary-link");
 const eventsLink = document.querySelector("#events-link");
 const eventType = document.querySelector("#event-type");
-const eventPayload = document.querySelector("#event-payload");
+const eventFields = document.querySelector("#event-fields");
 
-const payloadTemplates = {
-  remittance: {
-    event_id: "r1",
-    date: "2026-06-02",
-    brl_amount: "33969.60",
-    usd_credited: "6000.00",
-    fx_rate: "5.60",
-    fx_provenance: "broker contract",
-    iof: "369.60",
-    wire_fee: "0.00",
-    source_account: "own CPF",
-    broker: "IBKR",
-  },
-  trade: {
-    event_id: "t1",
-    date: "2026-06-03",
-    ticker: "NVDA",
-    market: "US",
-    currency: "USD",
-    instrument: "STOCK",
-    us_situs: true,
-    side: "BUY",
-    origin: "NORMAL",
-    qty: "10",
-    unit_price: "100.00",
-    commission: "1.00",
-    fx_to_brl: "5.60",
-    fx_provenance: "broker contract",
-  },
-  dividend: {
-    event_id: "d1",
-    date: "2026-09-15",
-    ticker: "NVDA",
-    gross: "4.00",
-    currency: "USD",
-    foreign_tax_withheld: "1.20",
-    net: "2.80",
-    fx_to_brl: "5.75",
-    fx_provenance: "broker contract",
-  },
-  btc_origin: {
-    event_id: "x1",
-    date: "2026-06-01",
-    brl_proceeds: "33600.00",
-    acq_cost_brl: "12000.00",
-    gain_brl: "21600.00",
-    exempt_35k: true,
-    in1888_reportable: true,
-  },
-  year_end_balance: {
-    event_id: "y1",
-    date: "2026-12-31",
-    tax_year: 2026,
-    ticker: "NVDA",
-    qty: "9",
-    price: "140.00",
-    price_provenance: "yfinance close",
-    fx_rate: "5.50",
-    fx_provenance: "PTAX 31/12",
-  },
+// Declarative field schemas — one entry per ledger event_type. `kind` drives both the
+// rendered control and how the value is serialized for the API:
+//   text/date/select/decimal -> kept as a STRING (decimals must stay strings so the
+//     backend's Decimal(str(value)) keeps exact precision — never send JS numbers).
+//   int  -> serialized with Number().
+//   bool -> a checkbox, serialized as a real JSON boolean (backend does int(value)).
+// Fields with `required` map to the HTML required attribute; optional fields are
+// omitted from the payload when left blank so backend defaults apply.
+const FIELD_SCHEMAS = {
+  remittance: [
+    { name: "event_id", label: "Event ID", kind: "text", required: true },
+    { name: "date", label: "Date", kind: "date", required: true },
+    { name: "brl_amount", label: "BRL amount", kind: "decimal", required: true },
+    { name: "usd_credited", label: "USD credited", kind: "decimal", required: true },
+    { name: "fx_rate", label: "FX rate (BRL/USD)", kind: "decimal", required: true },
+    { name: "fx_provenance", label: "FX provenance", kind: "text", required: true },
+    { name: "iof", label: "IOF", kind: "decimal", default: "0.00" },
+    { name: "wire_fee", label: "Wire fee", kind: "decimal", default: "0.00" },
+    { name: "source_account", label: "Source account", kind: "text" },
+    { name: "broker", label: "Broker", kind: "text" },
+    { name: "notes", label: "Notes", kind: "text" },
+  ],
+  trade: [
+    { name: "event_id", label: "Event ID", kind: "text", required: true },
+    { name: "date", label: "Date", kind: "date", required: true },
+    { name: "ticker", label: "Ticker", kind: "text", required: true },
+    { name: "market", label: "Market", kind: "text", required: true, default: "US" },
+    { name: "currency", label: "Currency", kind: "text", required: true, default: "USD" },
+    { name: "instrument", label: "Instrument", kind: "text", required: true, default: "STOCK" },
+    { name: "us_situs", label: "US situs", kind: "bool", default: true },
+    { name: "side", label: "Side", kind: "select", options: ["BUY", "SELL"], required: true },
+    {
+      name: "origin",
+      label: "Origin",
+      kind: "select",
+      options: ["NORMAL", "OPENING_IMPORT"],
+      required: true,
+      default: "NORMAL",
+    },
+    { name: "qty", label: "Qty", kind: "decimal", required: true },
+    { name: "unit_price", label: "Unit price", kind: "decimal", required: true },
+    { name: "commission", label: "Commission", kind: "decimal", required: true, default: "0.00" },
+    { name: "fx_to_brl", label: "FX to BRL", kind: "decimal", required: true },
+    { name: "fx_provenance", label: "FX provenance", kind: "text", required: true },
+    { name: "basis_provenance", label: "Basis provenance", kind: "text" },
+    { name: "linked_remittance_id", label: "Linked remittance ID", kind: "text" },
+    { name: "notes", label: "Notes", kind: "text" },
+  ],
+  dividend: [
+    { name: "event_id", label: "Event ID", kind: "text", required: true },
+    { name: "date", label: "Date", kind: "date", required: true },
+    { name: "ticker", label: "Ticker", kind: "text", required: true },
+    { name: "gross", label: "Gross", kind: "decimal", required: true },
+    { name: "currency", label: "Currency", kind: "text", required: true, default: "USD" },
+    { name: "foreign_tax_withheld", label: "Foreign tax withheld", kind: "decimal", required: true },
+    { name: "net", label: "Net", kind: "decimal", required: true },
+    { name: "fx_to_brl", label: "FX to BRL", kind: "decimal", required: true },
+    { name: "fx_provenance", label: "FX provenance", kind: "text", required: true },
+    { name: "notes", label: "Notes", kind: "text" },
+  ],
+  btc_origin: [
+    { name: "event_id", label: "Event ID", kind: "text", required: true },
+    { name: "date", label: "Date", kind: "date", required: true },
+    { name: "brl_proceeds", label: "BRL proceeds", kind: "decimal", required: true },
+    { name: "acq_cost_brl", label: "Acquisition cost BRL", kind: "decimal", required: true },
+    { name: "gain_brl", label: "Gain BRL", kind: "decimal", required: true },
+    { name: "exempt_35k", label: "Exempt (35k/mo)", kind: "bool", default: true },
+    { name: "in1888_reportable", label: "IN 1888 reportable", kind: "bool", default: true },
+    { name: "notes", label: "Notes", kind: "text" },
+  ],
+  year_end_balance: [
+    { name: "event_id", label: "Event ID", kind: "text", required: true },
+    { name: "date", label: "Date", kind: "date", required: true },
+    { name: "tax_year", label: "Tax year", kind: "int", required: true },
+    { name: "ticker", label: "Ticker", kind: "text", required: true },
+    { name: "qty", label: "Qty", kind: "decimal", required: true },
+    { name: "price", label: "Price", kind: "decimal", required: true },
+    { name: "price_provenance", label: "Price provenance", kind: "text", required: true },
+    { name: "fx_rate", label: "FX rate (BRL/USD)", kind: "decimal", required: true },
+    { name: "fx_provenance", label: "FX provenance", kind: "text", required: true },
+    { name: "notes", label: "Notes", kind: "text" },
+  ],
 };
+
+function fieldControl(field) {
+  if (field.kind === "bool") {
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.checked = field.default === true;
+    return input;
+  }
+  if (field.kind === "select") {
+    const select = document.createElement("select");
+    field.options.forEach((option) => {
+      const el = document.createElement("option");
+      el.value = option;
+      el.textContent = option;
+      select.appendChild(el);
+    });
+    select.value = field.default ?? field.options[0];
+    return select;
+  }
+  const input = document.createElement("input");
+  input.type = field.kind === "date" ? "date" : "text";
+  if (field.kind === "decimal" || field.kind === "int") {
+    input.inputMode = "decimal";
+  }
+  if (field.default !== undefined) {
+    input.value = field.default;
+  }
+  if (field.required) {
+    input.required = true;
+  }
+  return input;
+}
+
+function renderEventFields(type) {
+  const controls = FIELD_SCHEMAS[type].map((field) => {
+    const control = fieldControl(field);
+    control.dataset.name = field.name;
+    control.dataset.kind = field.kind;
+    const label = document.createElement("label");
+    if (field.kind === "bool") {
+      label.classList.add("checkbox-row");
+    }
+    label.append(field.label, control);
+    return label;
+  });
+  eventFields.replaceChildren(...controls);
+}
+
+function buildEventPayload() {
+  const payload = { event_type: eventType.value };
+  eventFields.querySelectorAll("[data-name]").forEach((control) => {
+    const { name, kind } = control.dataset;
+    if (kind === "bool") {
+      payload[name] = control.checked;
+      return;
+    }
+    const value = control.value.trim();
+    if (value === "") {
+      return; // omit blank optionals so backend defaults apply
+    }
+    payload[name] = kind === "int" ? Number(value) : value;
+  });
+  return payload;
+}
 
 function cell(text) {
   const td = document.createElement("td");
@@ -134,17 +220,16 @@ document.querySelector("#refresh-quotes").addEventListener("click", async () => 
 });
 yearInput.addEventListener("input", updateExportLinks);
 eventType.addEventListener("change", () => {
-  eventPayload.value = JSON.stringify(payloadTemplates[eventType.value], null, 2);
+  renderEventFields(eventType.value);
 });
 document.querySelector("#event-form").addEventListener("submit", async (event) => {
   event.preventDefault();
-  const payload = JSON.parse(eventPayload.value);
-  payload.event_type = eventType.value;
   await fetch("/api/ledger/events", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(buildEventPayload()),
   });
+  renderEventFields(eventType.value); // clear fields to defaults, keep selected type
   await refresh();
 });
 document.querySelector("#correction-form").addEventListener("submit", async (event) => {
@@ -161,6 +246,6 @@ document.querySelector("#correction-form").addEventListener("submit", async (eve
   });
   await refresh();
 });
-eventPayload.value = JSON.stringify(payloadTemplates[eventType.value], null, 2);
+renderEventFields(eventType.value);
 updateExportLinks();
 refresh();
