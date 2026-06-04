@@ -1026,6 +1026,19 @@
     "assets/generated/mockups/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "assets/generated/videos/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "assets/video/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "assets/video/compositions/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    "assets/video/compositions/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    ".agent0/tests/delegation-gate/01-block-missing-fields.sh": "be3936aba01c2ddf7a27e8d2038367d8b12d6090833064f9853db25af86f31db",
+    ".agent0/tests/delegation-gate/02-allow-full-handoff.sh": "b7c52b85d795324e15ca712e69f666452bdd32fb8421730266b1773de8e8c377",
+    ".agent0/tests/delegation-gate/03-outcome-either-field.sh": "14dff570d15ac6c0f396c34112969f0c5dca28d47484a835aa53db636ce6039d",
+    ".agent0/tests/delegation-gate/04-override-bypasses.sh": "3e5d83438862e5448c765cb28f7148b4107be7d118bdec6d91eed8e64b9ea9cc",
+    ".agent0/tests/delegation-gate/05-override-too-short-blocks.sh": "7d18cc213c39c04a721526643a4a68d1e8b496ad4d489be8135695c26579bf5d",
+    ".agent0/tests/delegation-gate/06-override-midprose-no-bypass.sh": "8579c88539f5f639db59e66ad7a5a351ffc9eea40c62236a5e8e4d9489106fd4",
+    ".agent0/tests/delegation-gate/07-empty-prompt-noop.sh": "629fc41f9239469432cb95f340b7647d5c519a1d757e77e9f92c895a0f692fbe",
+    ".agent0/tests/delegation-gate/08-bad-json-fail-closed.sh": "7105316a6c3aedbba0f12f63e91ed15669bcbb0d33aee7de46571336e5d869cd",
+    ".agent0/tests/delegation-gate/09-audit-allow-shape.sh": "bcf3a07bc0c66d01fabd4945740411f9c70175326d6153bec2ad675da0abd856",
+    ".agent0/tests/delegation-gate/10-escalation-advisory.sh": "fc2a3b9de067288f2c3d3861260e9fc31d70f96d11a1ea6bd025748157045a8a",
+    ".agent0/tests/delegation-gate/11-skill-directed-suppresses-escalation.sh": "ee303aef4ea4092b0da5580222568ac0c37c8b6b0661a15340a4836acf2b78e6",
+    ".agent0/tests/delegation-gate/12-shellcheck.sh": "d6473cabeefb9e4ffdc8e4c62be89b6a71464eff9039e1d48785756fa1740dfc",
+    ".agent0/tests/delegation-gate/run-all.sh": "3e7071ebc354b5f9eca5bc9a4a61dfd8f5d1e5e7e5aa78bf48345d284e163672"
   }
 }
