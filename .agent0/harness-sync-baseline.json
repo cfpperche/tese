@@ -1,6 +1,6 @@
 {
-  "agent0_commit": "12984c7de601fce3b8e3b8003413a6dfd905f824",
-  "synced_at": "2026-06-03T19:07:09Z",
+  "agent0_commit": "f30cd3bd721a80017fa5668a3f6ed4e1518e9890",
+  "synced_at": "2026-06-04T00:29:48Z",
   "tool_version": 1,
   "files": {
     ".agent0/.browser-state/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -20,7 +20,7 @@
     ".agent0/context/rules/reminders.md": "67a0b7e336fbc7ec19b61826772bb1077715e973daaedd933c190ed6f1d89bbd",
     ".agent0/context/rules/research-before-proposing.md": "29d2164e9c7e1639b1e86f6e2891263e39345376dae8c95c057f199e776e9db9",
     ".agent0/context/rules/routines.md": "f3c25b472a0b9cd11235a16bb12824839d514c6c048224595107c093bfcc3823",
-    ".agent0/context/rules/runtime-capabilities.md": "540c59f8f6ebe6d9a26490798a488081ab8abe70b221fb2875b79c0d6258333d",
+    ".agent0/context/rules/runtime-capabilities.md": "527142815bf373dada100ddd474cf2c8073aec5bb34378c27113f24cc5cdd2a4",
     ".agent0/context/rules/secrets-scan.md": "a09028b0560bd1ddadd0166481c8e96c1a80f28006fc1fae3343e27be8f2ef30",
     ".agent0/context/rules/session-handoff.md": "1b59ed82be33f5773532a9d1bd57679beea963b11a7338a273ee34b1dc849a4b",
     ".agent0/context/rules/spec-driven.md": "fb5f54bcc9ec4c374cadb257e380cf571db8009409716e54c7b692b5a6dc2d59",
@@ -1019,7 +1019,7 @@
     ".gitleaks.toml": "638c159dd67127874a0a5d4a74994079302eedae2b00d4279031955fde232b37",
     ".mcp.json.example": "3b84b858a0e3d2b2797f4c6c2e11a6cb6b96e83196a8a3db1d904e6008b4b609",
     "AGENTS.md": "ea074cac03bfb20a62e87496f18a3fffd2824ad1a5733d5a825c4d1848698ed4",
-    "CLAUDE.md#managed-block": "5a1d42349e83d3e2a5f3858d697e1f31e82c3f395c3466148ab4785ee709a19f",
+    "CLAUDE.md#managed-block": "3ed0a9d87af72eb5a8db0c4558a6d9a9de316fa69e11763cb229e8b6c3725db1",
     "assets/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "assets/brand/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "assets/generated/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",

@@ -10,6 +10,20 @@ paths:
 
 This registry is the canonical map of Agent0 first-party capabilities across supported tool-calling runtimes. It answers what each runtime can use natively, what requires opt-in activation, what is convention-only, and what is only planned or unsupported. The file is provider-neutral in content, even though it lives under `.agent0/context/rules/` because that is the current Agent0-managed sync surface.
 
+## Before claiming a capability or command does NOT exist
+
+This matrix lists **Agent0 first-party capabilities** — it is not a complete inventory of what the runtime exposes. Two things sit outside it on purpose:
+
+- The runtime's **own built-in commands** — Claude Code slash commands like `/goal`, `/compact`, `/clear`, `/loop`, `/config`; Codex's `/agent`; etc. These are native to the runtime, not Agent0 capacities, so they are absent here by design.
+- The session-injected **skills list** also enumerates only a subset — it lists Agent0 skills plus a few built-ins, not every command the runtime exposes.
+
+Therefore: **never assert that a command, tool, or capability does not exist just because it is absent from your context.** Absence from the skills list or this matrix is not evidence of non-existence. When a user asks about a command you cannot confirm:
+
+1. **Hedge honestly** — "I don't see it in my inventory; it may be a built-in I can't enumerate" — rather than stating it doesn't exist.
+2. **Verify or defer** — consult this matrix, the runtime's own docs (a 60-second check), or the user. Never let a guess become a confident negative.
+
+A false negative is worse than a hedge: it steers the user away from the exactly-right tool. **Canonical failure (2026-06-03, consumer session):** an agent told a user "`/goal` does not exist in this harness" and recommended a worse natural-language path — `/goal` is a real Claude Code command whose semantics (a goal with a done-condition that blocks completion until met) were *precisely* what the user was asking for. The confident negative cost the user the best tool. Same bug-class as the stale-capability assertions the § Maintenance re-audit note guards against — turned inward, at the agent's own harness.
+
 ## Status vocabulary
 
 Use exactly these states in runtime cells:
