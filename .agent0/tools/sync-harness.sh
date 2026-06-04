@@ -264,6 +264,8 @@ DRIFT=0
 STALE_UPDATED=0   # stale plain files auto-updated (consumer project == baseline, upstream moved)
 REMOVED=0         # upstream-removed files deleted from the consumer project
 CACHE_ORPHANS=0   # runtime-cache orphans removed (summarized, not listed per-file — spec 144)
+LOCAL_ONLY=0      # consumer gitignores the .agent0/ harness tree; skip tracked-file writes
+SKIPPED_TRACKED=0 # tracked write sites skipped under local-only mode
 
 # Git-source detection + one-shot advisories for the git-aware walk (spec 144).
 AGENT0_GIT_SOURCE=0
@@ -316,6 +318,27 @@ is_runtime_cache() {
   case "$1" in
     */runtime/od-sync/extracted-*) return 0 ;;
   esac
+  return 1
+}
+
+_is_local_only() {
+  local root="$1" rel
+  git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1 || return 1
+  for rel in ".agent0/skills" ".agent0/context" ".agent0/tools"; do
+    git -C "$root" check-ignore -q -- "$rel" 2>/dev/null || return 1
+  done
+}
+
+_consumer_tracks() {
+  ! git -C "$CONSUMER_ROOT" check-ignore -q -- "$1" 2>/dev/null
+}
+
+_skip_tracked_local_only() {
+  local rel="$1"
+  if [ "$LOCAL_ONLY" -eq 1 ] && _consumer_tracks "$rel"; then
+    SKIPPED_TRACKED=$((SKIPPED_TRACKED + 1))
+    return 0
+  fi
   return 1
 }
 
@@ -447,6 +470,9 @@ process_file() {
   local dst="$CONSUMER_ROOT/$rel"
 
   if [ ! -f "$src" ]; then
+    return
+  fi
+  if _skip_tracked_local_only "$rel"; then
     return
   fi
 
@@ -713,6 +739,9 @@ reconcile_deletions() {
     if [ ! -f "$dst" ]; then
       continue
     fi
+    if _skip_tracked_local_only "$rel"; then
+      continue
+    fi
     dst_sha="$(sha_of "$dst")"
 
     if [ "$dst_sha" = "$baseline_sha" ]; then
@@ -791,6 +820,9 @@ reconcile_deletions() {
 # removal surfaces in the consumer's git diff as the migration record.
 _remove_legacy_baseline() {
   if [ -f "$LEGACY_BASELINE_FILE" ]; then
+    if _skip_tracked_local_only ".claude/harness-sync-baseline.json"; then
+      return
+    fi
     rm -f "$LEGACY_BASELINE_FILE"
     printf -- '- baseline migrated (removed legacy .claude/harness-sync-baseline.json)\n' >&2
   fi
@@ -871,6 +903,9 @@ merge_settings_json() {
   local dst="$CONSUMER_ROOT/$rel"
 
   if [ ! -f "$src" ]; then
+    return
+  fi
+  if _skip_tracked_local_only "$rel"; then
     return
   fi
 
@@ -1420,6 +1455,9 @@ merge_claude_md() {
   if [ ! -f "$src" ]; then
     return
   fi
+  if _skip_tracked_local_only "$rel"; then
+    return
+  fi
 
   if [ ! -f "$dst" ]; then
     process_file "$rel"
@@ -1476,6 +1514,9 @@ merge_gitignore() {
   local marker="# === Agent0 harness sync — additions ==="
 
   if [ ! -f "$src" ]; then
+    return
+  fi
+  if _skip_tracked_local_only "$rel"; then
     return
   fi
 
@@ -1563,6 +1604,11 @@ merge_gitignore() {
 # main
 # ---------------------------------------------------------------------------
 
+if _is_local_only "$CONSUMER_ROOT"; then
+  LOCAL_ONLY=1
+  printf 'local-only: consumer ignores the .agent0/ harness tree — refreshing gitignored harness, skipping all tracked-file writes\n' >&2
+fi
+
 load_baseline
 # ---------------------------------------------------------------------------
 # skill discovery-link pass (spec 121 — multi-runtime skills)
@@ -1598,6 +1644,9 @@ sync_skill_discovery_links() {
     for rt in ".claude/skills" ".agents/skills"; do
       dst="$CONSUMER_ROOT/$rt/$slug"
       linkrel="../../.agent0/skills/$slug"
+      if _skip_tracked_local_only "$rt/$slug"; then
+        continue
+      fi
       mkdir -p "$CONSUMER_ROOT/$rt" 2>/dev/null || true
       if [ "$symlinks_ok" -eq 1 ]; then
         # idempotent: correct symlink already present?
@@ -1645,6 +1694,9 @@ _mirror_project_region() {
   local state cur_region cur_sha base_sha is_stale tmp begin_line end_line nobaseline
 
   [ -f "$dst" ] || return 0
+  if _skip_tracked_local_only "$rel"; then
+    return 0
+  fi
 
   state="$(detect_marker_state "$dst" "$PROJECT_MARKER")"
   if [ "$state" = "mismatched" ] || [ "$state" = "nested-invalid" ]; then
@@ -1784,8 +1836,13 @@ write_baseline
 # Summary on stderr so stdout stays parseable per-file decisions.
 {
   printf '\n'
-  printf 'synced: %d copied, %d stale-updated, %d removed, %d merged, %d up-to-date, %d customized-refused, %d overwritten\n' \
+  SUMMARY="$(printf 'synced: %d copied, %d stale-updated, %d removed, %d merged, %d up-to-date, %d customized-refused, %d overwritten' \
     "$COPIED" "$STALE_UPDATED" "$REMOVED" "$MERGED" "$UP_TO_DATE" "$CUSTOMIZED_REFUSED" "$OVERWRITTEN"
+  )"
+  if [ "$LOCAL_ONLY" -eq 1 ]; then
+    SUMMARY="$SUMMARY, $SKIPPED_TRACKED tracked-skipped (local-only)"
+  fi
+  printf '%s\n' "$SUMMARY"
 } >&2
 
 # Exit code policy

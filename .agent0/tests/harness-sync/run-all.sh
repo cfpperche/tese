@@ -20,12 +20,11 @@ if [ "${1:-}" = "-v" ]; then
 fi
 
 scripts=""
-for n in 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 \
-         24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40; do
-  match="$(ls "$SCRIPT_DIR/${n}"-*.sh 2>/dev/null | head -1 || true)"
-  if [ -n "$match" ]; then
-    scripts="$scripts $match"
-  fi
+# Glob every NN-*.sh scenario in lex order (auto-includes new scenarios — no
+# hardcoded list to forget to extend; was 01-40 and silently dropped 41/42).
+for script in "$SCRIPT_DIR"/[0-9][0-9]-*.sh; do
+  [ -e "$script" ] || continue
+  scripts="$scripts $script"
 done
 
 if [ -z "$scripts" ]; then

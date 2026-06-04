@@ -53,6 +53,14 @@ If neither `--agent0-path` nor `AGENT0_HARNESS_PATH` is given, the tool refuses 
 | `--apply --dry-run` | Agent0 + consumer project | nothing | 0 always (decisions only) |
 | `--apply --force` | Agent0 + consumer project | consumer project (incl. customized) | 0 = clean, customizations overwritten with warning |
 
+### Local-only consumers
+
+`local-only` mode is auto-detected when the consumer project is a git repo and git's ignore engine reports representative harness paths under `.agent0/` (`.agent0/skills`, `.agent0/context`, `.agent0/tools`) as ignored. It has no flag or tracked marker: the consumer's `.gitignore` is the durable declaration that the Agent0 harness is local development tooling, not part of that project's committed history.
+
+In local-only mode, `--apply` still refreshes gitignored harness files such as `.agent0/skills/`, `.agent0/context/`, `.agent0/tools/`, and `.agent0/harness-sync-baseline.json`, but skips writes to paths the consumer would track (`.gitignore`, `CLAUDE.md`, `AGENTS.md`, `.gitleaks.toml`, `.githooks/`, `.claude/settings.json`, runtime discovery links, and similar tracked surfaces). The tool prints a `local-only` notice and appends the tracked-skip count to the summary so the reduced write behavior is explicit.
+
+Motivating case: a public repo can consume Agent0 as local dev tooling without committing the harness or follow-on tracked drift. See `.agent0/memory/tmux-sentinel-sync-no-commit.md`.
+
 ## Customization detection — 3-way reconciliation
 
 For plain files (the `COPY_CHECK_*` manifest — hooks, context rules, tools, validators, skills, tests, agents, `.mcp.json.example`, `.codex/hooks.json`, `.codex/config.toml.example`, `.gitleaks.toml`, `.githooks/pre-commit`, `.gitkeep` sentinels), the sync reconciles **three** reference points: the consumer project's copy, the recorded **baseline** (Agent0's version of the file as of the consumer project's last `--apply` — see § Sync baseline), and Agent0's current version. Three points let the tool tell a file the consumer project *deliberately edited* apart from one it simply *hasn't caught up on* — the gap the original 2-state `sha256` compare could not close.
