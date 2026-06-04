@@ -42,8 +42,30 @@ _repo_root() {
   printf '%s' "$root"
 }
 
-# working-tree fingerprint: sorted porcelain (captures modified + untracked)
-_fingerprint() { git -C "$1" status --porcelain 2>/dev/null | LC_ALL=C sort; }
+# working-tree fingerprint: content-aware, sorted (spec 150.2).
+# Each line is "XY <path>\t<content-hash>" so a REWRITE of an already-listed path
+# changes the line (a path-level porcelain diff was blind to in-place content
+# rewrites — the dogfood finding). -uall lists untracked files individually rather
+# than collapsing them to a single "?? dir/" entry (so a file under a fresh
+# untracked dir is visible + hashable). The squad's own run-state is excluded — it
+# is ephemeral bookkeeping, not work product, and content-hashing would otherwise
+# see state.json churn as a tree change (false aborted_conflict).
+_fingerprint() {
+  local repo=$1
+  git -C "$repo" status --porcelain -uall 2>/dev/null | while IFS= read -r line; do
+    xy=${line:0:2}
+    p=${line:3}
+    case "$p" in '"'*'"') p=${p#\"}; p=${p%\"};; esac   # unquote special-char paths
+    case "$p" in *" -> "*) p=${p#* -> };; esac           # rename: hash the new path
+    case "$p" in .agent0/.runtime-state/*) continue;; esac
+    if [ -f "$repo/$p" ]; then
+      h=$(git -C "$repo" hash-object -- "$p" 2>/dev/null || printf -)
+    else
+      h=-   # deletion / non-regular: no content to hash
+    fi
+    printf '%s %s\t%s\n' "$xy" "$p" "$h"
+  done | LC_ALL=C sort
+}
 
 _is_terminal() {
   case "$1" in
@@ -223,7 +245,8 @@ cmd_guard() {
   # though turn-end zeroed the changes-since-boundary set. Conflict stays on newlines.
   local contract; contract="$(sget "$run" .contract)"
   local changed; changed="$(sget "$run" '.changed_paths[]?' 2>/dev/null)"
-  local paths; paths="$(printf '%s\n%s\n' "$changed" "$newlines" | sed '/^$/d' | LC_ALL=C sort -u | sed -E 's/^.{2,3}//')"
+  # strip the trailing "\t<content-hash>" (150.2) then the "XY " porcelain prefix
+  local paths; paths="$(printf '%s\n%s\n' "$changed" "$newlines" | sed '/^$/d' | sed -E 's/\t[^\t]*$//; s/^.{2,3}//' | LC_ALL=C sort -u)"
   local pat hit_forbidden=0 hit_human=0
   while IFS= read -r pat; do
     [ -n "$pat" ] || continue

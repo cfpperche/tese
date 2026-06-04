@@ -1,6 +1,6 @@
 {
-  "agent0_commit": "bcea0a17e5ecfc07c35d3eec149576286f76e40c",
-  "synced_at": "2026-06-04T20:20:16Z",
+  "agent0_commit": "0973d8bd56502af52318bfac74f97dc2011b31c8",
+  "synced_at": "2026-06-04T21:28:45Z",
   "tool_version": 1,
   "files": {
     ".agent0/.browser-state/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -103,7 +103,7 @@
     ".agent0/skills/squad/SKILL.md": "221708ea27879da48ebec92f30b1c6cb460b6d9c4a3e6ac5b5e5f50f9a79d3ce",
     ".agent0/skills/squad/references/squad-contract.md": "dc5e4a6a604d35c572bb6bd46090137e0b0198c5b8bf0064145edfbee8f1e74b",
     ".agent0/skills/squad/references/squad.json.example": "16351ad6a2e4df631d55c3b4fb47cd6cad22519e940b46b618577f808d08998e",
-    ".agent0/skills/squad/scripts/squad.sh": "d12209a6f8b45bc09db86ea21e01f931087d75723b48dd86fe10772c89422bdd",
+    ".agent0/skills/squad/scripts/squad.sh": "b18a5f5bc54211cf0b33a2a09baa1af850e024c91bc8558fb90b45acf4a2cb67",
     ".agent0/skills/status/SKILL.md": "c88554c6aa2c7b340b6542a8fcab767db0f78231224de2e5a8a5cf7fd31a7a8d",
     ".agent0/skills/video/SKILL.md": "ad38fbbd587487342da0ba01e8b432c7453c3aa7fc5daedb590f323d31e9daa1",
     ".agent0/skills/video/agents/openai.yaml": "a3b55e62dee4a0ec65a04f10dbdc2e770117ac94768dcf4e4bda3659ee826928",
@@ -259,6 +259,7 @@
     ".agent0/tests/harness-sync/38-settings-first-sync-no-advise-leak.sh": "2fdfcfe8616e5a4407a6e16e25030445e515593e4b811e7e9ccc2f74fa6aae31",
     ".agent0/tests/harness-sync/39-gitignore-aware-walk.sh": "9fbafe09874b3241554727436b8cc41f40dec9a5b234a651b53bce1bec662221",
     ".agent0/tests/harness-sync/40-non-git-source-fallback.sh": "b6d619a47a4788ab4bd0503e15100785720ce15af5ca7ff7365da4913fdcbfa5",
+    ".agent0/tests/harness-sync/41-baseline-write-large-consumer.sh": "de164e182c997ccec70653c841fb1f27814abe29cbbbf38ee03bd4c6af9be8a2",
     ".agent0/tests/harness-sync/README.md": "01d18c1e765456a05318d57e053022975e5991a8a41cea0a8dd2cde3b9248338",
     ".agent0/tests/harness-sync/run-all.sh": "5e82a89154c74a95497b86602a755edbfc32c89ecf7ac400dc576db38b880d52",
     ".agent0/tests/image-gen/01-draft-tier-workflow.sh": "a9da5e1df4176f5a50c6f93287e60d40e62186dde60c511bc40fb9daa0fcee1e",
@@ -411,6 +412,7 @@
     ".agent0/tests/squad/07-guard-policy.sh": "8093687856f3eb64098950de5b822cd0220a6a20e7a89770b20d28400ab5da91",
     ".agent0/tests/squad/08-shellcheck.sh": "5118ca30036c42b6b0bcb33ebbb091bcc611a2e9004b51b9425c2aacf5e2cc04",
     ".agent0/tests/squad/09-guard-policy-in-turn.sh": "9079fe2f40557928d6f8b11092f1fc612010fe995e097cd670da9883494bc978",
+    ".agent0/tests/squad/10-fingerprint-content-aware.sh": "7903d332b793ccd04cf96aa281da51e944d90d591b850f9202486fca73a78db3",
     ".agent0/tests/squad/run-all.sh": "877ce2644fb336ec4eb815d84e7b51fe3352d5a2a1c80387d8bb8cadb02002d3",
     ".agent0/tests/typecheck-advisory/01-bun-no-tsconfig-no-script-skips.sh": "aea8f125009f4f1bb0da495decb45a98ffb1b780e0972ba9e113673028f67aca",
     ".agent0/tests/typecheck-advisory/02-bun-tsconfig-direct-tsc.sh": "ce9567008c345b9dd226e6df1a4418568d7cc434b74bd4f145f747dfba68906a",
