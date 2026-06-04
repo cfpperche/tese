@@ -47,7 +47,7 @@ If `FAL_KEY` is unset OR `.mcp.json` is missing the `fal-ai` block, error with a
 2. **Resolve model + cost.** Read tier → model endpoint and approx cost from `.agent0/skills/image/references/tier-pricing.md`. Compute output path.
 3. **Print cost estimate.** Emit `estimated: $X.XXX for <model> at <dims>` to stdout BEFORE the generation call. This is the contract surface; do not skip. (Done by `gen.sh prepare`.)
 4. **Invoke `gen.sh exec`.** Pass the JSON envelope emitted by `prepare` to `bash .agent0/skills/image/scripts/gen.sh exec --envelope='<json>'`. The helper POSTs to `https://fal.run/<model>` with `Authorization: Key $FAL_KEY`, downloads the returned image to `output_path`, and on gpt-image-2 dim drift auto-downscales via `ffmpeg` (or emits an advisory if ffmpeg is absent). Generation goes through REST curl, NOT the fal-ai MCP's `run_model` tool — see § *Notes* for the hybrid rationale and spec 088 for the diagnosis. Collision suffix (`-2`, `-3`, ...) is applied at `prepare` time.
-5. **Append manifest.** Call `gen.sh record` with the envelope's tier/model/cost/prompt + the exec receipt's output_path + dimensions. One JSONL line per call into `assets/generated/.manifest.jsonl` with the 9-field schema (`ts`, `session_id`, `tier`, `model`, `cost_usd`, `prompt`, `output_path`, `dimensions`, `status`). On `exec` failure, still call `record` with `--status=failure` so the audit trail survives.
+5. **Append local manifest.** Call `gen.sh record` with the envelope's tier/model/cost/prompt + the exec receipt's output_path + dimensions. One JSONL line per call into gitignored `assets/generated/.manifest.jsonl` with the 9-field schema (`ts`, `session_id`, `tier`, `model`, `cost_usd`, `prompt`, `output_path`, `dimensions`, `status`). On `exec` failure, still call `record` with `--status=failure` so the local audit trail survives.
 6. **Report.** Print the output path and a brief one-line summary.
 
 ## Helper script
@@ -64,13 +64,13 @@ bash .agent0/skills/image/scripts/gen.sh prepare \
 FAL_KEY="$FAL_KEY" \
   bash .agent0/skills/image/scripts/gen.sh exec --envelope='<json-from-prepare>'
 
-# 3. record — append manifest line (success or failure, both are recorded)
+# 3. record — append local manifest line (success or failure, both are recorded)
 bash .agent0/skills/image/scripts/gen.sh record \
   --tier=<from-envelope> --model=<...> --cost=<...> --prompt="<...>" \
   --output=<from-receipt> --dims=<from-receipt> [--status=success|failure]
 ```
 
-The 3-stage shape is deliberate — generation is the network-bound step, `prepare` is the contract surface (cost print + path derivation), `record` is the audit step. The agent coordinates the three calls and surfaces failures from `exec` verbatim.
+The 3-stage shape is deliberate — generation is the network-bound step, `prepare` is the contract surface (cost print + path derivation), `record` is the local audit step. The agent coordinates the three calls and surfaces failures from `exec` verbatim.
 
 ## Examples
 

@@ -70,13 +70,13 @@ The discipline: **brand-tier prompts should compose from a consumer-local brand 
 
 Path-based split — durability is signalled by the tier flag at call time:
 
-- `assets/generated/mockups/*` → **gitignored** (`.gitignore` rule + `!.gitkeep` sentinel exclusion). Mockups are throwaway by design; the manifest is the historical record, not the PNGs themselves.
+- `assets/generated/mockups/*` → **gitignored** (`.gitignore` rule + `!.gitkeep` sentinel exclusion). Mockups are throwaway by design.
 - `assets/brand/*` → **git-tracked**. Brand assets are durable; their history is part of the project memory.
-- `assets/generated/.manifest.jsonl` → **git-tracked**. One JSONL line per `/image` call (across all tiers), so the cost + prompt history survives even when the mockup PNGs don't.
+- `assets/generated/.manifest.jsonl` → **gitignored** local audit state. One JSONL line per `/image` call (across all tiers), so the operator can inspect recent prompt/cost/status history without committing per-machine generation logs.
 
 Promotion mockup → brand asset is a manual `git mv assets/generated/mockups/<file> assets/brand/<file>` + commit. Rare and explicit by design.
 
-A consumer project that wants ALL image storage gitignored adds `assets/brand/*` to its own `.gitignore`. A consumer project that wants ALL tracked removes the `assets/generated/mockups/*` line. Both are local overrides; the harness default is the split above.
+A consumer project that wants ALL image storage gitignored adds `assets/brand/*` to its own `.gitignore`. A consumer project that wants draft mockups tracked removes the `assets/generated/mockups/*` line. A consumer project that intentionally wants image-call manifests tracked removes the `assets/generated/.manifest.jsonl` line and commits its own policy. These are local overrides; the harness default is the split above.
 
 ## Error on omitted tier
 
@@ -101,7 +101,7 @@ Filenames are derived from the prompt: `<YYYY-MM-DD>-<kebab-first-5-words>.png` 
 
 ## Manifest shape
 
-`assets/generated/.manifest.jsonl` carries one JSONL line per `/image` call. Schema:
+`assets/generated/.manifest.jsonl` carries one JSONL line per `/image` call. It is append-only local audit state and is gitignored by default. Schema:
 
 | Field | Shape | Source |
 |---|---|---|
@@ -116,7 +116,7 @@ Filenames are derived from the prompt: `<YYYY-MM-DD>-<kebab-first-5-words>.png` 
 
 The four core fields (`ts`, `session_id`, `model`, `cost_usd`) align with `.agent0/delegation-audit.jsonl` and `.agent0/secrets-audit.jsonl` field naming so cross-domain forensics queries work: `jq -c 'select(.session_id == "X")' assets/generated/.manifest.jsonl .agent0/delegation-audit.jsonl` returns every image call + every Agent dispatch in that session.
 
-The manifest is append-only by convention. No retention cap in v1 — image-gen frequency is much lower than delegation events, so growth is acceptable. If forensics becomes painful, a future spec adds rotation.
+The manifest is append-only by convention. No retention cap in v1 — image-gen frequency is much lower than delegation events, so local growth is acceptable. If forensics becomes painful, a future spec adds rotation.
 
 ## Override marker
 
@@ -164,7 +164,7 @@ Skill scripts read the table at call time; updates apply on next invocation with
 - **fal.ai key shape may not match gitleaks default rules.** Unlike OpenAI's `sk-*` or AWS's `AKIA*`, fal.ai keys (`<uuid>:<secret>`) are pattern-distinct. The first activation should test by writing the key to a scratch file and running `gitleaks detect --no-banner` against it — if not caught, add a custom rule to `.githooks/gitleaks.toml`. Mitigated meanwhile by the `${FAL_KEY}` indirection in `.mcp.json.example`.
 - **Pricing drift is real.** fal.ai changes prices occasionally. The `references/tier-pricing.md` table is a static snapshot; refresh quarterly via the routine. If the date stamp is >180 days old, treat the displayed cost as a lower bound and verify via fal.ai's current pricing page.
 - **Cost runaway from delegated sub-agents.** A sub-agent calling `/image` in a loop is not caught by `.agent0/hooks/delegation-verify.sh` — that validator gates on prod-vs-test classification at close, not on cost. v1 ships with pre-call estimate as the only signal. If empirical observation shows drift, a future spec adds a per-session call counter.
-- **Mockup PNGs are gone after `git clean -fdx`.** The `.gitignore` rule means `assets/generated/mockups/*` won't be in git history. The manifest survives (`assets/generated/.manifest.jsonl` is tracked), so prompt + cost + date stay grepable, but the actual PNG is lost. Promotion to `assets/brand/*` is the way to keep one.
+- **Mockup PNGs and the local manifest are gone after `git clean -fdx`.** The `.gitignore` rules mean `assets/generated/mockups/*` and `assets/generated/.manifest.jsonl` won't be in git history. Promotion to `assets/brand/*` is the way to keep a generated image; copy out any manifest rows you need before cleaning.
 - **Promotion is manual.** Mockup → brand asset is `git mv`. No automation. Acceptable — promotion is rare and the explicit step is the correct cognitive break.
 - **`.mcp.json` is secret-adjacent.** `FAL_KEY` indirection is the right pattern; never commit a populated `.mcp.json` with literal keys. Same caveat as the DBHub recipe's `DATABASE_URL`.
 - **No NSFW filtering at the skill layer.** fal.ai + the underlying providers (OpenAI / Google) enforce their own content policies at the model level. The skill does not re-implement filtering; if a prompt is rejected by the provider, the MCP returns an error and the skill surfaces it verbatim.

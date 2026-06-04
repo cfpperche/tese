@@ -68,3 +68,5 @@ prototypes/
 .claude/scheduled_tasks.lock
 
 .claude/skills/product/runtime/od-sync/pruned-*/
+
+assets/generated/.manifest.jsonl
