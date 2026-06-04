@@ -14,7 +14,8 @@
   "forbidden_paths": [
     "\\.env",
     "secrets",
-    "\\.agent0/.*-audit\\.jsonl"
+    "\\.agent0/.*-audit\\.jsonl",
+    "\\.agent0/HANDOFF\\.md"
   ],
 
   "human_gated_paths": [

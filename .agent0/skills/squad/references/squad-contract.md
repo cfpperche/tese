@@ -27,3 +27,15 @@
 ## The invariant
 
 `ready_for_human_prod` requires the `gate` green. Agent agreement (`propose-done` from both) is **necessary but never sufficient** — it cannot, alone, close a run. This is the spec-149 (de-biased deliberation) dependency made mechanical: "the agents converged" never substitutes for an external, executable check.
+
+## Author fail-closed gates (151 dogfood finding F1)
+
+The external gate is only as strong as its coverage — a gate that is **vacuously green** is worse than no gate, because it *looks* closed. The 151 `/squad` run hit exactly this: the gate ran a test-suite runner (`run-all.sh`) that **hardcoded its scenario list**, so the spec's own new test was never executed and the gate passed without verifying the feature. Rules for writing a gate:
+
+- **A suite-wrapping gate command must also prove the spec's own test is in the suite.** Add `test -f <path-to-the-spec's-new-test>` as a gate command, and require the suite runner to **discover tests by glob** (`NN-*.sh`), not a hardcoded list. Existence + a globbing runner together close the vacuous-green hole.
+- **Gate on the artifact, not its proxy.** `grep -q <marker> <file>` for a required doc/section is fine; `test -f` alone proves existence, not behavior — pair it with the suite run that exercises it.
+- **Prefer commands that fail when the work is absent.** If removing the implementation would still leave the gate green, the gate is wrong.
+
+## `forbidden_paths` is the only enforced scope (151 dogfood finding F3)
+
+The natural-language brief handed to a peer ("touch only X and Y") is a *hint* — nothing enforces it. Only `forbidden_paths` is mechanically checked by `guard`. So the default contract (`squad.json.example`) forbids `\.agent0/HANDOFF\.md` (a peer turn must not rewrite the orchestrator-owned handoff mid-build) alongside `\.env` / `secrets` / audit logs. Add any path a turn must never touch — scoping you actually want enforced goes here, not (only) in the brief.

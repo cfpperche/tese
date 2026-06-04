@@ -62,6 +62,7 @@ loop:
       # capture the bridge result; continue the loop.
 ```
 
+- **Review the peer's diff — a green gate is necessary, not sufficient (151 finding F2).** Before accepting a peer's turn or recording `propose-done`, read the actual diff. A peer told to "make the test pass" can bend *production* code to a **flawed test** (in the 151 run, Codex added a regression to satisfy a wrong assertion rather than flagging the test). If the test is wrong, fix the test — not the code. The external gate closes the run, but the orchestrator review is what keeps the gate honest.
 - **Disagreement in-loop** (the agents differ on an approach) → run the spec-149 de-biased mini-deliberation (`meeting.sh` blind commit/reveal + claim/evidence ledger) rather than letting the louder turn win.
 - **`human_checkpoint_required`** (a planned phase boundary or a human-gated path) → STOP, surface the state + a summary, wait for the human. Do not auto-continue past a checkpoint.
 - **Any `aborted_*`** → STOP, surface `squad.sh status` + a short report (what was done, why it aborted), wait for the human. `squad.sh rollback --run <run>` is available to restore the last clean boundary.
