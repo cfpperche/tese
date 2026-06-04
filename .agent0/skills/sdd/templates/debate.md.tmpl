@@ -1,6 +1,20 @@
+---
+meeting: {{SLUG}}
+roster: claude,codex,human
+rotation: claude,codex
+tier: decision-grade
+blind_phase: none
+turn_counter: 0
+next_speaker: claude
+synthesis: pending
+---
+
 # {{NNN}} — {{SLUG}} — debate
 
 _Created {{DATE}}._
+
+<!-- The YAML front-matter above is meeting.sh machine-state (spec 149): it lets
+`/sdd debate` run the de-biased mechanics — `meeting.sh commit|reveal|ab-map|ledger-add|ledger-check|check-anchors <debate.md>` — directly on this file. The `**Initiating agent:**` block below is the debate skill's human-readable role protocol; the two layers coexist. -->
 
 **Initiating agent:** {{initiating agent name}}
 **Reviewing agent:** {{reviewing agent name}}
@@ -15,6 +29,8 @@ Cross-model review of `spec.md` between two tool-calling CLI agents in separate 
 **Stop criteria:** human-decided. Default suggested cadence is ~3 rounds; the human asks either agent to "synthesize" when the disagreement is exhausted or the value diminishes. If more than 3 rounds are useful, append `## Round 4 — …` headers manually; the round-handling logic in both skills keys on placeholder presence, not round number.
 
 **Audit trail:** this file IS the audit trail. Git-tracked alongside the spec. No separate state file.
+
+**Anti-confirmation-bias (spec 149, decision-grade).** Round 1 SHOULD use the **blind commit/reveal** flow so the reviewer is not anchored on the initiator's position: each agent commits `sha256` of its independent opening via `meeting.sh commit`, and `meeting.sh reveal` publishes both only after both have committed (it refuses otherwise). Convergence is gated by the **claim/evidence ledger** (`meeting.sh ledger-add` / `ledger-check`): a point with only `assertion-only` claims is NOT resolved, regardless of agreement. The Synthesis records a **minority report** (any residual objection), never smoothed away. See `.agent0/context/rules/spec-driven.md` § debate and `meeting.md` § De-biased deliberation. _(Legacy position-first Round 1 below is the fallback when the blind flow isn't run.)_
 
 ---
 
@@ -74,6 +90,12 @@ _Written when the human explicitly asks an agent to synthesize ("synthesize the 
 **Unresolved disagreements:** (only if cap-reached or abandoned)
 
 - {{disagreement 1 — initiating agent's view + reviewing agent's view + why no resolution}}
+
+**Minority report:** (preserved verbatim — a residual objection from either agent is an auditable "fragile-convergence" signal, NOT smoothed into consensus; "none" if there is none)
+
+- {{minority objection, or "none"}}
+
+**Convergence evidence (ledger gate):** each "converged" point above is backed by an external anchor (citation / passing test / repro / file-read / explicit premise), not bare agreement — run `meeting.sh ledger-check` if a ledger was kept. Points resting on agreement alone are recorded UNRESOLVED.
 
 ---
 

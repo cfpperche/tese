@@ -8,13 +8,15 @@ A `SKILL.md` file **passes** validation when every rule below evaluates to OK. A
 
 ### Rule 1 — File present and parseable
 
-**Check.** A `SKILL.md` file exists at the path given to the validator, opens successfully, and starts with YAML frontmatter delimited by `---` on the first line and a closing `---` later in the file.
+**Check.** A `SKILL.md` file exists at the path given to the validator, opens successfully, starts with YAML frontmatter delimited by `---` on the first line and a closing `---` later in the file, and the frontmatter parses as a YAML mapping.
 
 **Spec citation.** `spec-snapshot.md` § "`SKILL.md` format" — "must contain YAML frontmatter followed by Markdown content."
 
-**Failure stderr.** `rule1-frontmatter: SKILL.md missing, empty, or not opened with '---'`
+**Failure stderr.**
+- `rule1-frontmatter: SKILL.md missing, empty, or not opened with '---'`
+- `rule1-yaml-syntax: frontmatter is not valid YAML: <parser error>`
 
-**Remediation.** Ensure the file's first line is exactly `---` (no BOM, no leading whitespace) and that a closing `---` appears before the markdown body.
+**Remediation.** Ensure the file's first line is exactly `---` (no BOM, no leading whitespace) and that a closing `---` appears before the markdown body. Quote or block-style scalar values that contain YAML syntax markers such as `: `.
 
 ### Rule 2 — `name` field present and well-formed
 

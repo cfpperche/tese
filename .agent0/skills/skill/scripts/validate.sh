@@ -66,6 +66,64 @@ fi
 # Extract frontmatter region (lines 2..close_line-1) into a variable
 frontmatter="$(sed -n "2,$((close_line - 1))p" "$skill_md")"
 
+# Validate YAML syntax before extracting fields with the bash fallback. PyYAML
+# catches the full syntax; the zero-dep guard catches the common plain-scalar
+# `: ` failure that strict loaders reject.
+if command -v python3 >/dev/null 2>&1 && python3 -c 'import yaml' >/dev/null 2>&1; then
+  yaml_error="$(
+    SKILL_MD="$skill_md" CLOSE_LINE="$close_line" python3 - <<'PY' 2>&1
+import os
+from pathlib import Path
+
+import yaml
+
+skill_md = Path(os.environ["SKILL_MD"])
+close_line = int(os.environ["CLOSE_LINE"])
+lines = skill_md.read_text(encoding="utf-8").splitlines()
+frontmatter = "\n".join(lines[1 : close_line - 1])
+
+try:
+    parsed = yaml.safe_load(frontmatter)
+except yaml.YAMLError as exc:
+    print(exc)
+    raise SystemExit(1)
+
+if parsed is None:
+    parsed = {}
+if not isinstance(parsed, dict):
+    print("frontmatter must parse as a YAML mapping")
+    raise SystemExit(1)
+PY
+  )"
+  yaml_status=$?
+  if [ "$yaml_status" -ne 0 ]; then
+    echo "rule1-yaml-syntax: frontmatter is not valid YAML: $yaml_error" >&2
+    exit 1
+  fi
+else
+  bad_plain_scalar="$(
+    printf '%s\n' "$frontmatter" | awk '
+      /^[[:space:]]/ { next }
+      /^[A-Za-z_][A-Za-z0-9_-]*:[[:space:]]*/ {
+        value = $0
+        sub(/^[A-Za-z_][A-Za-z0-9_-]*:[[:space:]]*/, "", value)
+        sub(/^[[:space:]]*/, "", value)
+        first = substr(value, 1, 1)
+        single_quote = sprintf("%c", 39)
+        if (first == "\"" || first == single_quote || first == "|" || first == ">" || first == "[" || first == "{") next
+        if (index(value, ": ") > 0) {
+          print NR + 1 ": " $0
+          exit
+        }
+      }
+    '
+  )"
+  if [ -n "$bad_plain_scalar" ]; then
+    echo "rule1-yaml-syntax: frontmatter plain scalar contains ': ' and is likely invalid YAML: $bad_plain_scalar" >&2
+    exit 1
+  fi
+fi
+
 # Simple top-level key extractor — single-line scalar values only (v1 limitation)
 # Returns first match of "^key: <value>"; trims trailing whitespace and surrounding quotes.
 get_field() {

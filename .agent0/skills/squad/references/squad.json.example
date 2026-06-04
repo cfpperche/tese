@@ -1,0 +1,25 @@
+{
+  "spec": "NNN-slug",
+  "roster": ["claude", "codex"],
+
+  "max_rounds": 20,
+  "max_repair_attempts": 3,
+
+  "gate": [
+    "bash .agent0/validators/run.sh",
+    "<acceptance command — e.g. the spec's executable acceptance tests>",
+    "<build/lint/typecheck command(s) for this project's stack, if any>"
+  ],
+
+  "forbidden_paths": [
+    "\\.env",
+    "secrets",
+    "\\.agent0/.*-audit\\.jsonl"
+  ],
+
+  "human_gated_paths": [
+    "\\.github/workflows/",
+    "migrations/",
+    "infra/"
+  ]
+}

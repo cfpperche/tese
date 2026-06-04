@@ -827,13 +827,20 @@ write_baseline() {
     fi
   fi
 
-  local agent0_commit synced_at tmp
+  local agent0_commit synced_at tmp files_tmp
   agent0_commit="$(cd "$AGENT0_ROOT" 2>/dev/null && git rev-parse HEAD 2>/dev/null || true)"
   synced_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   tmp="$(mktemp -t sync-baseline-write-XXXXXX)"
+  # Pass the files-map through a temp file via --slurpfile, NOT a --argjson
+  # command-line argument: a large consumer's files-map (~1000+ files) exceeds
+  # Linux MAX_ARG_STRLEN (~128 KB per single argv string) and execve fails with
+  # E2BIG ("Argument list too long"). --slurpfile reads from a file (no argv
+  # limit). See harness-sync test 41. ($files is a 1-element array → $files[0].)
+  files_tmp="$(mktemp -t sync-baseline-files-XXXXXX)"
+  printf '%s' "$files_obj" > "$files_tmp"
 
   if jq -n \
-       --argjson files "$files_obj" \
+       --slurpfile files "$files_tmp" \
        --arg commit "$agent0_commit" \
        --arg synced "$synced_at" \
        --argjson ver "$BASELINE_TOOL_VERSION" \
@@ -841,7 +848,7 @@ write_baseline() {
           agent0_commit: (if $commit == "" then null else $commit end),
           synced_at: $synced,
           tool_version: $ver,
-          files: $files
+          files: ($files[0] // {})
         }' > "$tmp" 2>/dev/null; then
     mkdir -p "$(dirname "$BASELINE_FILE")"
     mv "$tmp" "$BASELINE_FILE"
@@ -851,6 +858,7 @@ write_baseline() {
     rm -f "$tmp"
     printf '!! failed to write .agent0/harness-sync-baseline.json (jq error)\n' >&2
   fi
+  rm -f "$files_tmp"
 }
 
 # ---------------------------------------------------------------------------

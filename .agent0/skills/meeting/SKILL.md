@@ -45,10 +45,10 @@ Git-tracked under `.agent0/meetings/<slug>-<ts>/meeting.md` (a meeting is a deci
    bash .agent0/skills/meeting/scripts/meeting.sh init \
      --dir .agent0/meetings/<slug>-<ts> --slug <slug> --topic "<topic>" \
      --convener <your-id> --roster "<roster-csv>" --rotation "<rotation-csv>" \
-     --participants-block "<block>"
+     --tier <light|decision-grade> --participants-block "<block>"
    ```
-   The script writes `meeting.md` with `turn_counter: 0`, `next_speaker` = first in the fallback order, `synthesis: pending`, and echoes the path.
-5. **Opening turn** — the convener (you) writes the first turn: a tight framing of the topic and the 1–2 questions the meeting should resolve. Write it to a temp file and append via `append-turn --speaker <your-id> --label "<your runtime>"`. End it with a `Next: <id>` line if you want to hand the floor to a specific peer; otherwise the human directs the next turn with `--speaker`.
+   The script writes `meeting.md` with `turn_counter: 0`, `next_speaker` = first in the fallback order, `synthesis: pending`, `tier` (default `light`), and echoes the path. **Pass `--tier decision-grade` when the meeting's synthesis will gate a decision/implementation** (e.g. anything feeding `/squad`); that opts into the § De-biased decision-grade flow below. Exploratory meetings stay `light`.
+5. **Opening turn** — *light tier:* the convener (you) writes the first turn as a tight framing of the topic + the 1–2 questions to resolve (append via `append-turn --speaker <your-id>`; optional `Next: <id>`). *Decision-grade tier:* do NOT write an anchoring opening — instead run the **blind commit/reveal** flow (§ below) so neither agent's opening anchors the other.
 6. **Report** — print the meeting path, the participants, and that the next step is `/meeting turn` (naming the current default speaker per `resolve-speaker`).
 
 ## Subcommand: `turn` — 🔓 Medium freedom: the v1 core loop
@@ -81,6 +81,22 @@ Write exactly one turn.
    ```
    Pass `--require-sources` whenever the turn was taken with `--web` — the append fails (writing nothing) if the body lacks a `Sources:` block. `append-turn` writes the turn section, advances `turn_counter`, and sets `next_speaker` from the body's trailing `Next: <id>` directive if present (a non-roster directive fails the append before anything is written); with no directive the default is left unchanged.
 5. **Report** — print the turn number just written, the resulting default next speaker, and remind the user they can `/meeting turn` again or `/meeting synthesize` when ready. **Stop after one turn** — do not chain turns autonomously.
+
+## De-biased decision-grade flow — 🔓 Medium freedom (spec 149)
+
+Runs only on `--tier decision-grade` (and `/sdd debate`, which is always decision-grade). Structural anti-confirmation-bias; full rationale in `.agent0/context/rules/meeting.md` § De-biased deliberation. The active runtime orchestrates; the human pumps each step.
+
+1. **Blind opening (replaces the anchoring opening turn).** Each model speaker authors its opening *independently* (no peer text visible) into a private temp file, then commits its hash — do NOT append it as a turn:
+   ```bash
+   bash …/meeting.sh commit <meeting.md> --speaker <id> --text-file <opening.tmp>
+   ```
+   When fetching a peer's blind opening through the exec bridge, build the prompt from the transcript **only** (never include another agent's un-revealed opening, and never read the sealed `.agent0/.runtime-state/deliberation/` scratch into a prompt). After **all** model speakers have committed:
+   ```bash
+   bash …/meeting.sh reveal <meeting.md>     # refuses until all committed; verifies hashes; publishes both openings; unlocks critique
+   ```
+2. **Anonymized critique.** `bash …/meeting.sh ab-map <meeting.md>` → present prior contributions to each critiquing agent as `Proposal A/B` (randomized) per `references/turn-prompt.md`; the transcript stays attributed.
+3. **Ledger the convergence.** As points converge, record them: `meeting.sh ledger-add … --tag supported|contradicted|unresolved|assertion-only --anchor <citation|path:…|test:…>`. Before synthesizing, run `meeting.sh ledger-check` (assertion-only ⇒ that point is UNRESOLVED) and `meeting.sh check-anchors` (deterministic path/test verification).
+4. **Synthesis** records the rubric-over-ledger result + a **minority report** (§ synthesize). Convergence that rests on agreement alone, not an anchor, is reported unresolved — never "done because both agreed".
 
 ## Subcommand: `synthesize` — 🔓 Medium freedom + 🔒 human gate
 

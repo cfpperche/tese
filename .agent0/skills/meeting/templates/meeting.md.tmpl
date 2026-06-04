@@ -6,6 +6,8 @@ convener: {{CONVENER}}
 mode: human-orchestrated
 roster: {{ROSTER}}
 rotation: {{ROTATION}}
+tier: {{TIER}}
+blind_phase: none
 turn_counter: 0
 next_speaker: {{NEXT_SPEAKER}}
 synthesis: pending
@@ -26,5 +28,7 @@ _Turns are appended below in order. Each turn header is `### Turn N — <runtime
 ## Synthesis
 
 _Written when a participant is asked to synthesize. Names the synthesizing runtime, the convergence, recorded disagreements, and a recommended next step (graduate to `/sdd refine` as seed context, or no-op). The human then accepts / redirects / ends._
+
+_Decision-grade tier (spec 149): convergence is gated by the claim/evidence ledger (`meeting.sh ledger-check` — a point with only `assertion-only` claims is UNRESOLVED regardless of agreement), and a **minority report** (any residual objection) is preserved verbatim, never smoothed into consensus._
 
 _(not yet synthesized)_

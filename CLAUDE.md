@@ -146,7 +146,11 @@ Every first-party `.claude/skills/*/SKILL.md` must pass the agentskills.io front
 
 ## Meeting
 
-`/meeting` convenes a multi-party, multi-model deliberation — a human (intermittent), Claude Code, and Codex CLI take turns on a free topic or vague idea. Human-orchestrated v1 (one turn at a time, no autonomous looping); peer turns run through the `codex-exec`/`claude-exec` bridges; turn legality lives in a machine-readable header managed by `scripts/meeting.sh`. The collaborative sibling of `/brainstorm` (solo divergence) and `/sdd debate` (two-role spec review). Git-tracked, project-local transcripts under `.agent0/meetings/` (not propagated to consumers). See `.agent0/context/rules/meeting.md`.
+`/meeting` convenes a multi-party, multi-model deliberation — a human (intermittent), Claude Code, and Codex CLI take turns on a free topic or vague idea. Human-orchestrated v1 (one turn at a time, no autonomous looping); peer turns run through the `codex-exec`/`claude-exec` bridges; turn legality lives in a machine-readable header managed by `scripts/meeting.sh`. The collaborative sibling of `/brainstorm` (solo divergence) and `/sdd debate` (two-role spec review). Decision-grade `/meeting` + `/sdd debate` run the spec-149 anti-confirmation-bias protocol (blind commit/reveal opening, claim/evidence convergence gate, minority report) via `meeting.sh`. Git-tracked, project-local transcripts under `.agent0/meetings/` (not propagated to consumers). See `.agent0/context/rules/meeting.md`.
+
+## Squad
+
+`/squad` (spec 150) is the **autonomous, symmetric, ping-pong multi-agent build loop**: two heterogeneous runtimes (Claude Code ↔ Codex CLI) implement one already-`/sdd plan`-ned spec together without a human pumping each turn, until an **externally-verified done-condition** (the `docs/specs/NNN/squad.json` gate: tests/build/validator green) is met — then the human approves and triggers production. **Agent agreement only proposes done; the external gate is the only closer** (spec 149 is the hard predecessor). Bounded (`max_rounds`/`max_repair_attempts` → `aborted_budget`/`aborted_repairs`), turn-locked single-writer (out-of-turn → `aborted_conflict`; forbidden path → `aborted_policy`), human-at-milestone-gates, agents-prepare-prod / human-triggers-prod. State machine `.agent0/skills/squad/scripts/squad.sh`; the runtime drives the pump loop. The autonomous-loop demand spec 138 was gated on, realized as a build loop. See `.agent0/context/rules/squad.md`.
 
 ## Routines
 

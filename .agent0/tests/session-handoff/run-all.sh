@@ -15,7 +15,7 @@ if [ "${1:-}" = "-v" ]; then
 fi
 
 scripts=""
-for n in 01 02 03 04 05 06 07 08 09 10; do
+for n in 01 02 03 04 05 06 07 08 09 10 11; do
   match="$(ls "$SCRIPT_DIR/${n}"-*.sh 2>/dev/null | head -1 || true)"
   if [ -n "$match" ]; then
     scripts="$scripts $match"

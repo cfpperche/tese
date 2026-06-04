@@ -40,6 +40,19 @@ STATE_DIR="$SESSION_STATE_ROOT/$SESSION_ID"
 STARTED_AT="$STATE_DIR/started-at"
 NAGGED="$STATE_DIR/nagged"
 
+emit_block() {
+  local reason="$1"
+  mkdir -p "$STATE_DIR"
+  touch "$NAGGED"
+  if command -v jq >/dev/null 2>&1; then
+    jq -cn --arg reason "$reason" '{decision:"block", reason:$reason}'
+  else
+    cat <<'JSON'
+{"decision":"block","reason":"Before ending this session: update .agent0/HANDOFF.md (Current State / Active Work / Next Actions / Decisions & Gotchas) so the next session can pick up where this one left off. Then end your turn normally — this hook will not block again this session."}
+JSON
+  fi
+}
+
 # No session-start marker → nothing to enforce.
 [[ -f "$STARTED_AT" ]] || exit 0
 
@@ -61,6 +74,32 @@ git -C "$PROJECT_DIR" rev-parse --git-dir >/dev/null 2>&1 || exit 0
 # No uncommitted changes → no work to log.
 CURRENT_PORCELAIN="$(git -C "$PROJECT_DIR" status --porcelain 2>/dev/null || true)"
 if [[ -z "$CURRENT_PORCELAIN" ]]; then
+  # Publish-boundary closeout check: a clean tree can still have stale
+  # handoff text after the session committed and pushed work. When HEAD moved
+  # since SessionStart and the branch is no longer ahead of upstream, require
+  # the latest session commit to be the handoff closeout commit.
+  START_HEAD_FILE="$STATE_DIR/start-head"
+  if [[ -f "$START_HEAD_FILE" ]]; then
+    START_HEAD="$(cat "$START_HEAD_FILE" 2>/dev/null || true)"
+    CURRENT_HEAD="$(git -C "$PROJECT_DIR" rev-parse HEAD 2>/dev/null || true)"
+    if [[ -n "$START_HEAD" && -n "$CURRENT_HEAD" && "$START_HEAD" != "$CURRENT_HEAD" ]]; then
+      UPSTREAM_REF="$(git -C "$PROJECT_DIR" rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true)"
+      if [[ -n "$UPSTREAM_REF" ]]; then
+        AHEAD_COUNT="$(git -C "$PROJECT_DIR" rev-list --count "$UPSTREAM_REF..HEAD" 2>/dev/null || echo "")"
+        if [[ "$AHEAD_COUNT" == "0" ]]; then
+          if [[ ! -f "$SESSION_FILE" ]]; then
+            emit_block "Before ending this session: pushed session work reached a clean publish boundary, but .agent0/HANDOFF.md is missing. Recreate .agent0/HANDOFF.md with Current State / Active Work / Next Actions / Decisions & Gotchas before finalizing. latest_commit=$CURRENT_HEAD upstream=$UPSTREAM_REF"
+            exit 0
+          fi
+          LATEST_HANDOFF_COMMIT="$(git -C "$PROJECT_DIR" rev-list --max-count=1 "$START_HEAD..HEAD" -- .agent0/HANDOFF.md 2>/dev/null || true)"
+          if [[ "$LATEST_HANDOFF_COMMIT" != "$CURRENT_HEAD" ]]; then
+            emit_block "Before ending this session: pushed session work reached a clean publish boundary, but the latest session commit does not update .agent0/HANDOFF.md. Re-read .agent0/HANDOFF.md and make Active Work + Next Actions describe post-push reality before finalizing. latest_commit=$CURRENT_HEAD latest_handoff_commit=${LATEST_HANDOFF_COMMIT:-none} upstream=$UPSTREAM_REF"
+            exit 0
+          fi
+        fi
+      fi
+    fi
+  fi
   exit 0
 fi
 
@@ -118,9 +157,4 @@ if [[ -f "$SESSION_FILE" && "$SESSION_FILE" -nt "$STARTED_AT" ]]; then
   exit 0
 fi
 
-# Block once and re-prompt the model.
-mkdir -p "$STATE_DIR"
-touch "$NAGGED"
-cat <<'JSON'
-{"decision":"block","reason":"Before ending this session: the repo has uncommitted changes but .agent0/HANDOFF.md was not updated this session. Update .agent0/HANDOFF.md (Current State / Active Work / Next Actions / Decisions & Gotchas) so the next session can pick up where this one left off. Then end your turn normally — this hook will not block again this session."}
-JSON
+emit_block "Before ending this session: the repo has uncommitted changes but .agent0/HANDOFF.md was not updated this session. Update .agent0/HANDOFF.md (Current State / Active Work / Next Actions / Decisions & Gotchas) so the next session can pick up where this one left off. Then end your turn normally — this hook will not block again this session."

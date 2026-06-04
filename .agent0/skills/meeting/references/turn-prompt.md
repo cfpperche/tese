@@ -36,5 +36,20 @@ Your job this turn:
   is invalid. (If you also use a `Next:` directive, put it on the very last line, after Sources.)
 <IF NOT --web> - Do not perform web research this turn; reason from the transcript and your knowledge.
 
+Anti-confirmation-bias discipline (decision-grade tier — spec 149; structural, not a persona):
+- **Blind opening (round 1).** If you are asked for your *opening*, write it from your own
+  independent analysis. Do NOT read or reference any peer opening — they are committed-but-sealed
+  and will be revealed only after you commit yours. Anchoring on a peer's opening defeats the point.
+- **Judge by content, not author.** When prior contributions are presented to you as
+  `Proposal A` / `Proposal B` (anonymized, randomized order), critique the *content* — do not try
+  to deanonymize or defer to a perceived-stronger model.
+- **Counterfactual coverage (required when you take a position).** Name the strongest *alternative*
+  to your preferred path, state what evidence would make that alternative win, and give the
+  strongest objection to your own position. Do not perform generic agreement.
+- **Confidence is routing, not evidence.** You may mark your confidence, but high confidence is
+  never itself an argument; if you agree with a peer, say what *external* evidence (a citation, a
+  passing test, a repro, a file you read) backs it — bare agreement is "assertion-only" and does
+  not resolve a point.
+
 Output ONLY your turn text (it becomes your contribution verbatim). Do not edit any files.
 Do not wrap it in code fences. Do not prefix it with your name — the meeting records that.

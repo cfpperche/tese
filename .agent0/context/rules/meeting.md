@@ -82,6 +82,16 @@ A **qualifying meeting** is a real v1 meeting where BOTH hold:
 
 The mechanical half is measured now: `meeting.sh friction <meeting.md>` (and the `model_turns` / `max_consecutive_model_turns` / `current_model_streak` lines in `meeting.sh state`) report the longest run of consecutive model turns with no human turn between them, and flag whether the ≥4 mechanical threshold is met. **Three qualifying meetings** reopen planning on the autopilot build. Until then, only this measurement ships.
 
+## De-biased deliberation (decision-grade tier — spec 149)
+
+To make "the agents converged" a trustworthy signal (the prerequisite for the planned `/squad`), decision-grade deliberation — `/sdd debate` and any `/meeting` whose synthesis will gate implementation — runs a structural anti-confirmation-bias protocol. **Structural, not persona** (no "be the skeptic" — consistent with `[[feedback_no_persona_role_prompting]]`). `meeting.sh` owns the mechanics; `/meeting` and `/sdd debate` both call them. Exploratory meetings stay on the **light** tier (no blind phase / ledger) — set the tier at `init` (`--tier light|decision-grade`; default `light`).
+
+1. **Blind commit/reveal opening** — `meeting.sh commit --speaker <id> --text-file <opening>` seals each agent's independent opening (gitignored under `.agent0/.runtime-state/deliberation/`, never written to the transcript) and records a `sha256` commitment row. `meeting.sh reveal` publishes the openings **only after every model speaker has committed** (it refuses otherwise) and verifies each hash (tamper-evidence). This removes the turn-1 anchoring of the old "initiator writes position first, reviewer reads it" flow. Blindness is procedural + tamper-evident, not cryptographic against an adversarial peer.
+2. **Judgment-surface anonymization** — `meeting.sh ab-map` emits a randomized `Proposal A/B ↔ runtime` mapping for the critique view; the durable transcript stays attributed (audit preserved).
+3. **Claim/evidence convergence gate** — `meeting.sh ledger-add --claim … --tag supported|contradicted|unresolved|assertion-only --anchor …` then `ledger-check`: a convergence point with only `assertion-only` claims is **UNRESOLVED regardless of agreement** (exit 1). `meeting.sh check-anchors` deterministically verifies cheap anchors (`path:<p>` exists; `test:<id>` present in the test tree) — v1 does not re-run tests.
+4. **Synthesis = rubric over the ledger + minority report** — the synthesizer scores against the ledger (not free-form prose) and preserves any residual objection verbatim as a "fragile-convergence" signal.
+- Turn schema (in `references/turn-prompt.md`): counterfactual-candidate-coverage (best alternative + evidence that would flip it + strongest objection to your own path) and confidence-as-routing (never as evidence). Heterogeneous models (Claude↔Codex) are required; single-model deliberation is bias-prone.
+
 ## Notes
 
 _Consumer-extension surface — append consumer-local bullets here. Sync flags the file as `!! customized` (sha-compare is section-blind); the conflict region is mechanically this section: take new upstream verbatim, re-add consumer bullets at the end._

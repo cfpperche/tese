@@ -167,6 +167,8 @@ Only runs when this runtime is the initiating agent (no pre-existing file or fre
 
 Leave all other placeholders (`{{round 1 critique}}`, `{{round 2 counter}}`, …) intact for the reviewing agent and later rounds to fill.
 
+**Anti-confirmation-bias (spec 149) — prefer the blind Round 1.** The position-first Round 1 above anchors the reviewer. For decision-grade debates, instead run the **blind commit/reveal** flow via `meeting.sh` (debate is always decision-grade): each agent commits the `sha256` of its *independent* opening (`meeting.sh commit <debate.md> --speaker <id> --text-file <tmp>`), and `meeting.sh reveal <debate.md>` publishes both only after both committed (it refuses otherwise; it verifies hashes). Build a peer's blind-opening prompt from `spec.md` only — never include the peer's un-revealed opening. Then gate convergence with the claim/evidence ledger (`meeting.sh ledger-add` / `ledger-check` — `assertion-only` ⇒ unresolved) and record a **minority report** at synthesis. Full flow: `.agent0/context/rules/meeting.md` § De-biased deliberation + `.agent0/skills/meeting/SKILL.md` § De-biased decision-grade flow. The legacy position-first Round 1 stays the fallback when the blind flow isn't run.
+
 ### Step 5: Emit handoff instruction — 🔒 Low freedom
 
 Print to the user (substitute the actual `NNN-<slug>`, this runtime's role, and the slot just written). Two shapes — pick the one matching this invocation's role:

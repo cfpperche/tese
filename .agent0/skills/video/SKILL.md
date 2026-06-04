@@ -1,7 +1,7 @@
 ---
 name: video
 description: AI + programmatic video generation (opt-in). Use when the user wants to produce a video for the project — a product demo, changelog/release clip, animated explainer, killer-flow walkthrough, or a generative motion asset. REQUIRED `--mode` flag picks the mechanism - `code` (deterministic - HyperFrames renders an HTML/CSS/JS composition to MP4 locally, zero inference cost, source git-tracked) or `generative` (paid, async - fal.ai video models via REST queue, ledger-based submit/poll, hard `--confirm-cost-usd` gate because clips cost 100-1000x an image). Omitted `--mode` errors with both options. Generative needs FAL_KEY; code needs Node 22+/ffmpeg/headless-Chrome. Not for editing recorded footage. See `.agent0/context/rules/video-gen.md`.
-argument-hint: <--mode=code|generative> [code: scaffold <slug> | render <slug>] [generative: --tier=draft|standard|premium --duration=<sec> --confirm-cost-usd=<max> [--image-url=<url>] [--name=<slug>] "<prompt>"]
+argument-hint: '<--mode=code|generative> [code: scaffold <slug> | render <slug>] [generative: --tier=draft|standard|premium --duration=<sec> --confirm-cost-usd=<max> [--image-url=<url>] [--name=<slug>] "<prompt>"]'
 license: MIT
 compatibility: Compatible with any agentskills.io-compatible runtime (Claude Code, OpenAI Codex, and others) that can run bash. Code mode requires a local toolchain (Node.js 22+, FFmpeg, headless Chrome via the pinned hyperframes engine) and is runtime-neutral (npx + bash). Generative mode is runtime-neutral (bash + curl + jq against the fal.ai queue REST API) and requires FAL_KEY + network — it does NOT depend on any runtime's native background execution (fire-and-forget ledger). No MCP required.
 metadata:

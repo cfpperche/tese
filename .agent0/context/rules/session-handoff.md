@@ -22,6 +22,11 @@ Codex receives the same hook-backed handoff behavior from `.codex/hooks.json` af
 
 Codex `Stop` does not reject termination byte-for-byte like a Claude stop block. `decision: "block"` tells Codex to continue and creates a new continuation prompt from `reason`. The shared hook exits silently when Codex sends `stop_hook_active=true` or when the per-session `nagged` marker is already set.
 
+The Stop hook has two closeout branches:
+
+- **Dirty-work branch:** when this session has dirty own work and `.agent0/HANDOFF.md` was not updated after SessionStart, it nags once.
+- **Publish-boundary branch:** when the worktree is clean, `HEAD` moved since SessionStart, the current branch is not ahead of its upstream, and the latest commit in the session range does not touch `.agent0/HANDOFF.md`, it nags once. This catches the recurring "commit/push complete, but handoff still describes pre-push next actions" failure. It does not parse the handoff prose; it forces a final re-read/update ritual at the publish boundary.
+
 ## What to write in HANDOFF.md
 
 Update before ending a session that touched the repo. Use exactly these four short sections:
@@ -103,7 +108,7 @@ Set `CLAUDE_SKIP_SESSION_HOOKS=1` to disable Stop-hook enforcement for quick Q&A
 
 ## State files
 
-`.agent0/.session-state/<session_id>/` holds four ephemeral artifacts per runtime session: `started-at` (touched by `SessionStart`), `nagged` (touched by `Stop` when it nags), `start-porcelain.txt` (a snapshot of `git status --porcelain` captured by `SessionStart`), and `edited-files.txt` (per-session list of Claude Edit/Write/MultiEdit paths and Codex `apply_patch` paths, append-only with dedup, populated by `session-track-edits.sh`; seeded empty by `SessionStart` so presence means "tracker-enabled"). Gitignored — do not commit.
+`.agent0/.session-state/<session_id>/` holds five ephemeral artifacts per runtime session: `started-at` (touched by `SessionStart`), `nagged` (touched by `Stop` when it nags), `start-porcelain.txt` (a snapshot of `git status --porcelain` captured by `SessionStart`), `start-head` (the `git rev-parse HEAD` value captured by `SessionStart`, when available, used by the publish-boundary branch), and `edited-files.txt` (per-session list of Claude Edit/Write/MultiEdit paths and Codex `apply_patch` paths, append-only with dedup, populated by `session-track-edits.sh`; seeded empty by `SessionStart` so presence means "tracker-enabled"). Gitignored — do not commit.
 
 `session_id` comes from the stdin payload each runtime passes to hooks (`$.session_id`). When absent, or when it contains characters outside `^[a-zA-Z0-9_-]+$`, hooks fall to the literal subdir `unknown`.
 

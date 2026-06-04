@@ -53,6 +53,7 @@ touch "$STATE_DIR/edited-files.txt"
 # absence triggers Stop's fallback to today's mtime-only logic.
 if git -C "$PROJECT_DIR" rev-parse --git-dir >/dev/null 2>&1; then
   git -C "$PROJECT_DIR" status --porcelain >"$STATE_DIR/start-porcelain.txt" 2>/dev/null || true
+  git -C "$PROJECT_DIR" rev-parse HEAD >"$STATE_DIR/start-head" 2>/dev/null || rm -f "$STATE_DIR/start-head"
 fi
 
 # Accumulate all banner blocks into BANNER, then emit at the end. Claude gets a
